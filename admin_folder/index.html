@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard Login</title>
+    <!-- Modern Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="background-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+    
+    <main class="login-container">
+        <div class="glass-panel">
+            <div class="login-header">
+                <div class="logo-placeholder">A</div>
+                <h1>Admin Portal</h1>
+                <p>Enter your credentials to access the dashboard</p>
+            </div>
+            
+            <form id="admin-login-form" class="login-form">
+                <!-- CSRF Token will be appended by JS -->
+                
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="username" name="username" placeholder="admin" required autocomplete="username">
+                        <span class="focus-border"></span>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+                        <span class="focus-border"></span>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember">
+                        <span class="checkmark"></span>
+                        Remember device
+                    </label>
+                    <a href="#" class="forgot-link">Forgot password?</a>
+                </div>
+                
+                <div id="error-message" class="error-message"></div>
+                
+                <button type="submit" class="btn-primary">
+                    <span class="btn-text">Sign In</span>
+                    <span class="loader" style="display: none;"></span>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <script src="js/login.js"></script>
+</body>
+</html>

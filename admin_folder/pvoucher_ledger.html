@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscribers - P-Voucher Ledger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/accounts.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-placeholder">A</div>
+                <h2>Admin Panel</h2>
+                <button class="mobile-toggle" id="close-sidebar">
+                    <ion-icon name="close-outline"></ion-icon>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">
+                    <ion-icon name="home-outline"></ion-icon>
+                    <span>Dashboard</span>
+                </a>
+                
+                <div class="nav-group">
+                    <div class="nav-item nav-item-has-children active" id="subscribers-menu-toggle">
+                        <div class="nav-item-icon-text">
+                            <ion-icon name="people-outline"></ion-icon>
+                            <span>Subscribers</span>
+                        </div>
+                        <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+                    </div>
+                    <ul class="sub-menu open" id="subscribers-submenu">
+                        <li><a href="accounts.html" class="sub-item">Accounts</a></li>
+                        <li><a href="insurance_approvals.html" class="sub-item">Insurance</a></li>
+                        <li><a href="subscription_plans.html" class="sub-item">Subscription Plans</a></li>
+                        <li><a href="pvoucher_ledger.html" class="sub-item active">P-Voucher Ledger</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-item nav-item-has-children" id="pos-menu-toggle">
+                        <div class="nav-item-icon-text">
+                            <ion-icon name="cart-outline"></ion-icon>
+                            <span>POS Management</span>
+                        </div>
+                        <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+                    </div>
+                    <ul class="sub-menu" id="pos-submenu">
+                        <li><a href="products.html" class="sub-item">Products</a></li>
+                        <li><a href="#" class="sub-item">Inventory</a></li>
+                        <li><a href="#" class="sub-item">Transactions</a></li>
+                        <li><a href="#" class="sub-item">Reports</a></li>
+                    </ul>
+                </div>
+                
+                <div class="nav-group">
+                    <div class="nav-item nav-item-has-children" id="agents-menu-toggle">
+                        <div class="nav-item-icon-text">
+                            <ion-icon name="briefcase-outline"></ion-icon>
+                            <span>Agents</span>
+                        </div>
+                        <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+                    </div>
+                    <ul class="sub-menu" id="agents-submenu">
+                        <li><a href="agent_accounts.html" class="sub-item">Manage Accounts</a></li>
+                        <li><a href="../registration_folder/index.php" class="sub-item">Register Agent</a></li>
+                        <li><a href="agent_ranks.html" class="sub-item">Ranks & Qualifications</a></li>
+                        <li><a href="agent_teams.html" class="sub-item">Manage Teams</a></li>
+                        <li><a href="agent_applications.html" class="sub-item">Applications</a></li>
+                        <li><a href="agent_app_forms.html" class="sub-item">App Forms</a></li>
+                        <li><a href="agent_commissions.html" class="sub-item">Commissions</a></li>
+                        <li><a href="agent_encashments.html" class="sub-item">Encashments</a></li>
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="#" class="nav-item" id="logout-btn">
+                    <ion-icon name="log-out-outline"></ion-icon>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <button class="menu-btn" id="open-sidebar">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </button>
+                <div class="header-search">
+                    <ion-icon name="search-outline"></ion-icon>
+                    <input type="text" id="ledger-search" placeholder="Search by name or ID...">
+                </div>
+                <div class="header-profile">
+                    <div class="notification-bell">
+                        <ion-icon name="notifications-outline"></ion-icon>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="avatar">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Admin">
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-content accounts-content">
+                <div class="welcome-banner" style="margin-bottom: 24px;">
+                    <h1>P-Voucher Ledger</h1>
+                    <p>Track P-voucher awards and deductions for all subscribers.</p>
+                </div>
+
+                <div class="table-container fade-in">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>DATE & TIME</th>
+                                <th>SUBSCRIBER</th>
+                                <th>ACCOUNT ID</th>
+                                <th>AMOUNT</th>
+                                <th>TYPE</th>
+                                <th>DESCRIPTION</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledger-table-body">
+                            <tr class="loading-row">
+                                <td colspan="6" style="text-align: center; padding: 40px;">
+                                    <div class="loader" style="margin: 0 auto; border-top-color: var(--primary-color);"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/pvoucher_ledger.js"></script>
+</body>
+</html>

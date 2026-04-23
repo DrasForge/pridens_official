@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchants - Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        /* ── FILTER BAR ── */
+        .filter-bar { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin-bottom:24px; background:rgba(255,255,255,.04); border:1px solid var(--border-color); border-radius:14px; padding:16px 20px; }
+        .filter-group { display:flex; flex-direction:column; gap:6px; flex:1; min-width:160px; }
+        .filter-group label { font-size:.75rem; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
+        .filter-group input,
+        .filter-group select { background:rgba(255,255,255,.06); border:1px solid var(--border-color); color:#fff; border-radius:8px; padding:9px 12px; font-size:.9rem; font-family:'Outfit',sans-serif; }
+        .filter-group input:focus,
+        .filter-group select:focus { outline:none; border-color:#6366f1; }
+        .filter-group select option { background:#1e293b; }
+
+        /* ── STATS STRIP ── */
+        .stats-strip { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:14px; margin-bottom:24px; }
+        .stat-card { background:rgba(255,255,255,.04); border:1px solid var(--border-color); border-radius:12px; padding:16px 18px; }
+        .stat-card .stat-label { font-size:.72rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:.07em; margin-bottom:5px; }
+        .stat-card .stat-val   { font-size:1.6rem; font-weight:700; }
+        .stat-card.total  .stat-val { color:#fff; }
+        .stat-card.active .stat-val { color:#4ade80; }
+        .stat-card.pend   .stat-val { color:#fbbf24; }
+        .stat-card.sus    .stat-val { color:#f87171; }
+
+        /* ── MERCHANT CARDS GRID (PRIDENS FORMAT) ── */
+        .merchant-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:18px; }
+        .merchant-card { background:rgba(255,255,255,.015); border:1px solid rgba(255,255,255,.05); border-radius:14px; padding:20px; display:flex; flex-direction:column; gap:14px; transition:transform .2s, border-color .2s; }
+        .merchant-card:hover { border-color:#6366f1; transform:translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,0.2); }
+
+        .mc-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+        .mc-icon { width:48px; height:48px; border-radius:10px; background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(168,85,247,.2)); display:flex; align-items:center; justify-content:center; color:#818cf8; font-size:1.4rem; flex-shrink:0; overflow:hidden;}
+        .mc-icon img { width:100%; height:100%; object-fit:cover; }
+        .mc-info { flex:1; min-width:0; }
+        .mc-name { font-weight:700; color:#fff; font-size:1.05rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .mc-type { font-size:.76rem; color:var(--text-dim); margin-top:2px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;}
+
+        .mc-code { font-size:.65rem; font-weight:700; color:rgba(255,255,255,.5); background:rgba(255,255,255,.05); padding:2px 6px; border-radius:4px; margin-top:4px; display:inline-block; }
+
+        .mc-details { display:flex; flex-direction:column; gap:8px; font-size:.84rem; color:var(--text-dim); padding-top:10px; border-top:1px solid rgba(255,255,255,.05); }
+        .mc-detail { display:flex; align-items:flex-start; gap:10px; }
+        .mc-detail ion-icon { width:16px; text-align:center; color:#6366f1; font-size:1rem; margin-top:1px;}
+        .mc-detail-text { flex:1; line-height:1.4; }
+
+        .status-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:6px; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+        .st-Pending   { background:rgba(251,191,36,.15); color:#fbbf24; }
+        .st-Active    { background:rgba(34,197,94,.15);  color:#4ade80; }
+        .st-Suspended { background:rgba(248,113,113,.15);color:#f87171; }
+        .st-Rejected  { background:rgba(148,163,184,.15);color:#94a3b8; }
+
+        .mc-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; padding-top:12px; border-top:1px solid rgba(255,255,255,.05); }
+        .mc-actions button { flex:1; padding:8px; border-radius:6px; font-family:'Outfit',sans-serif; font-weight:600; font-size:.8rem; cursor:pointer; border:1px solid transparent; transition:all .2s; display:flex; justify-content:center; align-items:center; gap:5px; }
+        .btn-approve  { background:#22c55e; color:#fff; }
+        .btn-approve:hover  { background:#16a34a; }
+        .btn-reject   { background:transparent; border-color:#ef4444!important; color:#ef4444; }
+        .btn-reject:hover   { background:rgba(239,68,68,.1); }
+        .btn-suspend  { background:transparent; border-color:var(--text-dim)!important; color:var(--text-dim); }
+        .btn-suspend:hover  { background:rgba(255,255,255,.05); color:#fff; }
+        .btn-view     { background:rgba(255,255,255,.05); color:#fff; border-color:rgba(255,255,255,.1)!important; }
+        .btn-view:hover     { background:rgba(255,255,255,.1); }
+
+        /* ── PAGINATION ── */
+        .pagination { display:flex; gap:8px; justify-content:center; margin-top:28px; flex-wrap:wrap; }
+        .page-btn { padding:6px 14px; border:1px solid var(--border-color); background:transparent; color:#fff; border-radius:8px; cursor:pointer; font-family:'Outfit',sans-serif; transition:all .2s; }
+        .page-btn:hover { background:rgba(99,102,241,.15); border-color:#6366f1; }
+        .page-btn.active { background:#6366f1; border-color:#6366f1; font-weight:700; }
+
+        .empty-state { text-align:center; padding:60px 20px; color:var(--text-dim); }
+        .empty-state ion-icon { font-size:56px; display:block; margin:0 auto 16px; }
+        /* ── VIEW MODAL ── */
+        .view-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(6px); }
+        .view-modal-content { background:#0f172a; border:1px solid rgba(255,255,255,0.08); border-radius:20px; padding:0; width:94%; max-width:900px; max-height:90vh; overflow-y:auto; position:relative; box-shadow:0 24px 64px rgba(0,0,0,0.6); }
+        .vm-header { padding:22px 32px; background:linear-gradient(to right, rgba(99,102,241,0.08), rgba(168,85,247,0.05)); border-bottom:1px solid rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:10; backdrop-filter:blur(10px); }
+        .vm-header h3 { margin: 0; color: #fff; font-size: 1.25rem; display:flex; align-items:center; gap:12px; }
+        .vm-close { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); color:var(--text-dim); font-size:1.4rem; cursor:pointer; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+        .vm-close:hover { color:#fff; background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.15); transform:scale(1.05); }
+        .vm-body-inner { padding: 32px; display:grid; gap:24px; grid-template-columns:1fr; }
+        @media (min-width: 800px) { .vm-body-inner { grid-template-columns:1.2fr 1fr; } }
+        
+        .vm-card { background:rgba(255,255,255,0.015); border:1px solid rgba(255,255,255,0.04); border-radius:16px; padding:24px; }
+        .vm-full { grid-column: 1 / -1; }
+        .vm-section-title { font-size: 0.95rem; font-weight: 700; color: #818cf8; margin-bottom: 20px; display:flex; align-items:center; gap:8px; border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom:12px; }
+        .vm-section-title ion-icon { font-size: 1.25rem; }
+        
+        .vm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 16px; }
+        .vm-row { display: flex; flex-direction: column; gap: 5px; }
+        .vm-row.full { grid-column: 1 / -1; }
+        .vm-lbl { font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight:600; }
+        .vm-val { font-size: 0.95rem; color: #fff; font-weight: 500; line-height: 1.4; word-break: break-word; }
+        
+        .vm-docs { display:flex; flex-wrap:wrap; gap:12px; }
+        .doc-link { display:inline-flex; align-items:center; gap:8px; color:#fff; text-decoration:none; background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.3); padding:8px 16px; border-radius:10px; font-size:0.85rem; font-weight:600; transition:all 0.2s; }
+        .doc-link:hover { background:#6366f1; border-color:#6366f1; transform:translateY(-2px); box-shadow:0 8px 20px rgba(99,102,241,0.3); }
+        .doc-link.green { background:rgba(34,197,94,0.1); border-color:rgba(34,197,94,0.3); }
+        .doc-link.green:hover { background:#22c55e; border-color:#22c55e; box-shadow:0 8px 20px rgba(34,197,94,0.3); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="dashboard-body">
+<div class="background-animation">
+    <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+</div>
+
+<div class="dashboard-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <button class="menu-btn" id="open-sidebar"><ion-icon name="menu-outline"></ion-icon></button>
+            <div class="header-profile">
+                <div class="avatar"><img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Admin"></div>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+            <div class="welcome-banner" style="margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                <div>
+                    <h1><ion-icon name="storefront-outline" style="font-size:1.1em;vertical-align:middle;margin-right:10px;color:#6366f1;"></ion-icon>Merchants</h1>
+                    <p>Manage all registered merchant partners.</p>
+                </div>
+                <a href="register_merchant.html" class="btn-primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;padding:10px 22px;">
+                    <ion-icon name="add-circle-outline"></ion-icon> Register New Merchant
+                </a>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-strip" id="statsStrip">
+                <div class="stat-card total"><div class="stat-label">Total</div><div class="stat-val" id="st-total">—</div></div>
+                <div class="stat-card active"><div class="stat-label">Active</div><div class="stat-val" id="st-active">—</div></div>
+                <div class="stat-card pend"><div class="stat-label">Pending</div><div class="stat-val" id="st-pending">—</div></div>
+                <div class="stat-card sus"><div class="stat-label">Suspended</div><div class="stat-val" id="st-suspended">—</div></div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>Search</label>
+                    <input type="text" id="q-search" placeholder="Store name, code, email…" onkeydown="if(event.key==='Enter')loadMerchants(1)">
+                </div>
+                <div class="filter-group" style="max-width:160px;">
+                    <label>Status</label>
+                    <select id="q-status" onchange="loadMerchants(1)">
+                        <option value="">All</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Active">Active</option>
+                        <option value="Suspended">Suspended</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </div>
+                <button class="btn-primary" onclick="loadMerchants(1)" style="padding:9px 22px;align-self:flex-end;">
+                    <ion-icon name="search-outline" style="margin-right:6px;"></ion-icon>Search
+                </button>
+            </div>
+
+            <!-- Grid -->
+            <div id="merchant-grid" class="merchant-grid"></div>
+            <div id="pagination" class="pagination"></div>
+        </div>
+    </main>
+</div>
+
+<!-- Reject Modal -->
+<div id="rejectModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:none;align-items:center;justify-content:center;">
+    <div style="background:#1e293b;border:1px solid var(--border-color);border-radius:16px;padding:28px;max-width:420px;width:90%;">
+        <h3 style="margin-bottom:12px;">Rejection Reason</h3>
+        <textarea id="reject-reason" rows="4" placeholder="Provide a reason for rejection…" style="width:100%;background:rgba(255,255,255,.06);border:1px solid var(--border-color);color:#fff;border-radius:8px;padding:10px;font-family:'Outfit',sans-serif;box-sizing:border-box;font-size:.9rem;"></textarea>
+        <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+            <button onclick="closeRejectModal()" style="padding:9px 18px;background:#334155;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif;">Cancel</button>
+            <button onclick="confirmReject()" style="padding:9px 18px;background:#ef4444;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-family:'Outfit',sans-serif;">Confirm Reject</button>
+        </div>
+    </div>
+</div>
+
+<!-- View Modal -->
+<div id="viewModal" class="view-modal">
+    <div class="view-modal-content">
+        <div class="vm-header">
+            <h3><ion-icon name="storefront-outline"></ion-icon> Merchant Details <span id="vm-status" class="status-badge" style="font-size:0.8rem;"></span></h3>
+            <button class="vm-close" onclick="closeViewModal()"><ion-icon name="close-outline"></ion-icon></button>
+        </div>
+        <div id="vm-body">Loading...</div>
+    </div>
+</div>
+
+<script src="js/sidebar-module.js"></script>
+<script>
+let rejectTargetId = null;
+let statsCache = { total:0, Active:0, Pending:0, Suspended:0 };
+
+document.addEventListener('DOMContentLoaded', () => loadMerchants(1));
+
+async function loadMerchants(page) {
+    const q      = document.getElementById('q-search').value.trim();
+    const status = document.getElementById('q-status').value;
+    const params = new URLSearchParams({ page });
+    if (q)      params.append('search', q);
+    if (status) params.append('status', status);
+
+    const grid = document.getElementById('merchant-grid');
+    grid.innerHTML = `<div class="empty-state"><ion-icon name="hourglass-outline"></ion-icon><p>Loading…</p></div>`;
+
+    try {
+        const res  = await fetch(`../admin_API/get_merchants.php?${params}`);
+        const data = await res.json();
+
+        if (!data.data?.length) {
+            grid.innerHTML = `
+                <div class="empty-state" style="grid-column:1/-1">
+                    <ion-icon name="storefront-outline"></ion-icon>
+                    <h3>No merchants found</h3>
+                    <p>Try adjusting your filters or register a new merchant.</p>
+                    <a href="register_merchant.html" class="btn-primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+                        <ion-icon name="add-circle-outline"></ion-icon> Register Merchant
+                    </a>
+                </div>`;
+            renderPagination(0, page, 20);
+            updateStats([]);
+            return;
+        }
+
+        updateStats(data.data);
+        grid.innerHTML = data.data.map(m => merchantCard(m)).join('');
+        renderPagination(data.total, page, data.per_page);
+    } catch(e) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><ion-icon name="warning-outline"></ion-icon><p>Failed to load merchants.</p></div>`;
+    }
+}
+
+function merchantCard(m) {
+    const initials = (m.store_name || m.business_name || '?').substring(0,2).toUpperCase();
+    
+    let iconClass = 'storefront-outline';
+    const cat = (m.store_category || '').toLowerCase();
+    if(cat.includes('food') || cat.includes('restaurant')) iconClass = 'restaurant-outline';
+    if(cat.includes('cafe')) iconClass = 'cafe-outline';
+    if(cat.includes('hotel')) iconClass = 'bed-outline';
+    if(cat.includes('tech') || cat.includes('electronic')) iconClass = 'hardware-chip-outline';
+    if(cat.includes('apparel')) iconClass = 'shirt-outline';
+
+    const iconHTML = m.store_logo 
+        ? `<img src="../admin_API/${m.store_logo}" alt="logo">` 
+        : `<ion-icon name="${iconClass}"></ion-icon>`;
+
+    const location = [m.address_city, m.address_province].filter(Boolean).join(', ') || 'No location provided';
+    const manager = m.owner_name || 'Unknown';
+    const email = m.business_email || '—';
+    const type = m.store_category || 'Retail';
+    const status = m.status || 'Pending';
+    const date = m.created_at ? new Date(m.created_at).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }) : '—';
+
+    let actionHTML = '';
+    if (status === 'Pending') {
+        actionHTML = `
+        <div style="width:100%; display:flex; gap:8px;">
+            <button class="btn-approve" onclick="updateStatus(${m.id},'Active')"><ion-icon name="checkmark-outline"></ion-icon> Approve</button>
+            <button class="btn-reject" onclick="openReject(${m.id})"><ion-icon name="close-outline"></ion-icon> Reject</button>
+        </div>
+        <div style="width:100%; display:flex; gap:8px;">
+            <button class="btn-view" onclick="openViewModal(${m.id})"><ion-icon name="eye-outline"></ion-icon> View Details</button>
+        </div>`;
+    } else if (status === 'Active') {
+        actionHTML = `
+        <div style="width:100%; display:flex; gap:8px;">
+            <button class="btn-suspend" onclick="updateStatus(${m.id},'Suspended')"><ion-icon name="ban-outline"></ion-icon> Suspend</button>
+        </div>
+        <div style="width:100%; display:flex; gap:8px;">
+            <button class="btn-view" onclick="openViewModal(${m.id})"><ion-icon name="eye-outline"></ion-icon> View Details</button>
+        </div>`;
+    } else if (status === 'Suspended') {
+        actionHTML = `
+        <div style="width:100%; display:flex; gap:8px;">
+            <button class="btn-approve" onclick="updateStatus(${m.id},'Active')"><ion-icon name="play-outline"></ion-icon> Reinstate</button>
+        </div>
+        <div style="width:100%; display:flex; gap:8px;">
+            <button class="btn-view" onclick="openViewModal(${m.id})"><ion-icon name="eye-outline"></ion-icon> View Details</button>
+        </div>`;
+    } else if (status === 'Rejected') {
+        actionHTML = `
+        <div style="width:100%; display:flex; gap:8px;">
+            <button class="btn-approve" onclick="updateStatus(${m.id},'Pending')"><ion-icon name="refresh-outline"></ion-icon> Re-review</button>
+        </div>
+        <div style="width:100%; display:flex; gap:8px;">
+            <button class="btn-view" onclick="openViewModal(${m.id})"><ion-icon name="eye-outline"></ion-icon> View Details</button>
+        </div>`;
+    }
+
+    return `
+    <div class="merchant-card" id="mc-${m.id}">
+        <div class="mc-header">
+            <div style="display:flex;gap:12px;align-items:flex-start;flex:1;min-width:0;">
+                <div class="mc-icon">${iconHTML}</div>
+                <div class="mc-info">
+                    <div class="mc-name" title="${m.store_name || m.business_name}">${m.store_name || m.business_name}</div>
+                    <div class="mc-type">${type}</div>
+                    <div class="mc-code">${m.merchant_code}</div>
+                </div>
+            </div>
+            <div style="display:flex; align-items:flex-start;">
+                <span class="status-badge st-${status}">${status}</span>
+            </div>
+        </div>
+        
+        <div class="mc-details">
+            <div class="mc-detail">
+                <ion-icon name="person-circle-outline"></ion-icon>
+                <div class="mc-detail-text">
+                    <span style="display:block; font-weight:600; color:#fff;">${manager}</span>
+                    <span style="font-size:0.75rem;">${email}</span>
+                </div>
+            </div>
+            <div class="mc-detail">
+                <ion-icon name="location-outline"></ion-icon>
+                <span class="mc-detail-text">${location}</span>
+            </div>
+            <div class="mc-detail" style="margin-top:4px;">
+                <ion-icon name="calendar-outline"></ion-icon>
+                <span class="mc-detail-text">Registered: <strong style="color:#fff; font-weight:600;">${date}</strong></span>
+            </div>
+        </div>
+        <div class="mc-actions">
+            ${actionHTML}
+        </div>
+    </div>`;
+}
+
+function updateStats(merchants) {
+    statsCache = { total:0, Active:0, Pending:0, Suspended:0 };
+    merchants.forEach(m => {
+        statsCache.total++;
+        if (m.status) statsCache[m.status] = (statsCache[m.status] || 0) + 1;
+    });
+    document.getElementById('st-total').textContent     = statsCache.total;
+    document.getElementById('st-active').textContent    = statsCache['Active'] || 0;
+    document.getElementById('st-pending').textContent   = statsCache['Pending'] || 0;
+    document.getElementById('st-suspended').textContent = statsCache['Suspended'] || 0;
+}
+
+async function updateStatus(merchantId, status, reason = '') {
+    if (!confirm(`Are you sure you want to set this merchant as "${status}"?`)) return;
+    try {
+        const res  = await fetch('../admin_API/update_merchant_status.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ merchant_id: merchantId, status, rejection_reason: reason })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            loadMerchants(1);
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch(e) { alert('Network error.'); }
+}
+
+function openReject(id) {
+    rejectTargetId = id;
+    document.getElementById('reject-reason').value = '';
+    document.getElementById('rejectModal').style.display = 'flex';
+}
+function closeRejectModal() {
+    document.getElementById('rejectModal').style.display = 'none';
+    rejectTargetId = null;
+}
+async function confirmReject() {
+    const reason = document.getElementById('reject-reason').value.trim();
+    if (!reason) { alert('Please provide a rejection reason.'); return; }
+    closeRejectModal();
+    await updateStatus(rejectTargetId, 'Rejected', reason);
+}
+
+function renderPagination(total, page, perPage) {
+    const pages = Math.ceil(total / perPage);
+    const cont  = document.getElementById('pagination');
+    if (pages <= 1) { cont.innerHTML = ''; return; }
+    let html = '';
+    for (let i = 1; i <= pages; i++) {
+        html += `<button class="page-btn ${i===page?'active':''}" onclick="loadMerchants(${i})">${i}</button>`;
+    }
+    cont.innerHTML = html;
+}
+
+async function openViewModal(id) {
+    const modal = document.getElementById('viewModal');
+    const body = document.getElementById('vm-body');
+    const statusB = document.getElementById('vm-status');
+    modal.style.display = 'flex';
+    body.innerHTML = '<div style="text-align:center;padding:40px;"><ion-icon name="hourglass-outline" style="font-size:32px;animation:spin 1s linear infinite;color:#6366f1;"></ion-icon><p style="margin-top:12px;color:var(--text-dim);">Loading details...</p></div>';
+    statusB.textContent = '';
+    statusB.className = 'status-badge';
+
+    try {
+        const res = await fetch(`../admin_API/get_merchant_detail.php?id=${id}`);
+        const json = await res.json();
+        if (json.status !== 'success') {
+            body.innerHTML = `<p style="color:#f87171">Error: ${json.message}</p>`;
+            return;
+        }
+        
+        const m = json.data;
+        const o = m.owner || {};
+        const u = m.user || {};
+        
+        statusB.textContent = m.status || 'Pending';
+        statusB.classList.add('st-' + (m.status || 'Pending'));
+        
+        let docsHtml = '';
+        if (m.documents && m.documents.length > 0) {
+            docsHtml = m.documents.map(d => `<a href="../admin_API/${d.file_path}" target="_blank" class="doc-link"><ion-icon name="document-attach-outline"></ion-icon> ${d.doc_type}</a>`).join('');
+        } else {
+            docsHtml = '<span style="color:var(--text-dim);font-size:0.85rem;">No documents uploaded.</span>';
+        }
+
+        body.innerHTML = `
+            <div class="vm-body-inner">
+                <!-- Left Column -->
+                <div style="display:flex; flex-direction:column; gap:24px;">
+                    <div class="vm-card">
+                        <div class="vm-section-title"><ion-icon name="business-outline"></ion-icon> Business Information</div>
+                        <div class="vm-grid">
+                            <div class="vm-row full"><span class="vm-lbl">Store Name</span><span class="vm-val" style="font-size:1.1rem;font-weight:700;color:#818cf8;">${m.store_name || '—'}</span></div>
+                            <div class="vm-row"><span class="vm-lbl">Business Name</span><span class="vm-val">${m.business_name || '—'}</span></div>
+                            <div class="vm-row"><span class="vm-lbl">Category</span><span class="vm-val">${m.store_category || '—'}</span></div>
+                            <div class="vm-row"><span class="vm-lbl">Type</span><span class="vm-val">${m.business_type || '—'}</span></div>
+                            <div class="vm-row"><span class="vm-lbl">TIN</span><span class="vm-val">${m.business_tin || '—'}</span></div>
+                            <div class="vm-row"><span class="vm-lbl">Contact</span><span class="vm-val">${m.business_contact || '—'}</span></div>
+                            <div class="vm-row"><span class="vm-lbl">Email</span><span class="vm-val">${m.business_email || '—'}</span></div>
+                            <div class="vm-row full"><span class="vm-lbl">Opening Hours</span><span class="vm-val" style="color:#cbd5e1;">${m.opening_hours || '—'}</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="vm-card">
+                        <div class="vm-section-title"><ion-icon name="folder-open-outline"></ion-icon> Business Documents</div>
+                        <div class="vm-docs">
+                            ${docsHtml}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div style="display:flex; flex-direction:column; gap:24px;">
+                    <div class="vm-card">
+                        <div class="vm-section-title"><ion-icon name="person-outline"></ion-icon> Owner & Account</div>
+                        <div class="vm-grid">
+                            <div class="vm-row full"><span class="vm-lbl">Full Name</span><span class="vm-val">${o.first_name || ''} ${o.middle_name || ''} ${o.last_name || ''}</span></div>
+                            <div class="vm-row full"><span class="vm-lbl">Login Email</span><span class="vm-val">${u.email || '—'}</span></div>
+                            <div class="vm-row"><span class="vm-lbl">Contact</span><span class="vm-val">${o.contact_number || '—'}</span></div>
+                            <div class="vm-row"><span class="vm-lbl">ID Type</span><span class="vm-val">${o.id_type || '—'}</span></div>
+                        </div>
+                        <div class="vm-docs" style="margin-top:20px;">
+                            ${o.id_front_path ? `<a href="../admin_API/${o.id_front_path}" target="_blank" class="doc-link green"><ion-icon name="id-card-outline"></ion-icon> ID Front</a>` : ''}
+                            ${o.id_back_path ? `<a href="../admin_API/${o.id_back_path}" target="_blank" class="doc-link green"><ion-icon name="card-outline"></ion-icon> ID Back</a>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="vm-card">
+                        <div class="vm-section-title"><ion-icon name="location-outline"></ion-icon> Location & Bank</div>
+                        <div class="vm-grid">
+                            <div class="vm-row full"><span class="vm-lbl">Full Address</span><span class="vm-val">${m.address_street || ''}, ${m.address_barangay || ''}, ${m.address_city || ''}, ${m.address_province || ''}</span></div>
+                            <div class="vm-row full"><span class="vm-lbl">Coordinates</span><span class="vm-val">${m.latitude || '—'}, ${m.longitude || '—'}</span></div>
+                            
+                            <div style="grid-column: 1/-1; height:1px; background:rgba(255,255,255,0.05); margin:8px 0;"></div>
+                            
+                            <div class="vm-row"><span class="vm-lbl">Payout Bank</span><span class="vm-val">${m.bank_name || '—'}</span></div>
+                            <div class="vm-row"><span class="vm-lbl">Act. Number</span><span class="vm-val">${m.bank_account_number || '—'}</span></div>
+                            <div class="vm-row full"><span class="vm-lbl">Act. Name</span><span class="vm-val">${m.bank_account_name || '—'}</span></div>
+                        </div>
+                    </div>
+
+                    <div class="vm-card vm-full" style="margin-top:8px;">
+                        <div class="vm-section-title"><ion-icon name="cart-outline"></ion-icon> Marketplace Inventory</div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:24px; background:rgba(99,102,241,0.05); border:1px solid rgba(99,102,241,0.1); border-radius:14px;">
+                            <div>
+                                <h4 style="margin:0; font-size:1.05rem;">Pridens Marketplace Products</h4>
+                                <p style="color:var(--text-dim); font-size:0.85rem; margin-top:4px;">Manage stock, pricing, and listings in a dedicated manager.</p>
+                            </div>
+                            <a href="merchant_products.html?id=${m.id}" target="_blank" class="btn-primary" style="text-decoration:none; display:flex; align-items:center; gap:8px; padding:12px 20px;">
+                                <ion-icon name="open-outline" style="font-size:1.2rem;"></ion-icon> Open Marketplace Manager
+                            </a>
+                        </div>
+                    </div>
+                </div>
+        `;
+    } catch(e) {
+        body.innerHTML = `<p style="color:#f87171">Network error loading details.</p>`;
+    }
+}
+
+function closeViewModal() {
+    document.getElementById('viewModal').style.display = 'none';
+}
+</script>
+</body>
+</html>

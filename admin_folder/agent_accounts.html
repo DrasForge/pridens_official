@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Accounts - Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/accounts.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        .agent-avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-blue), var(--primary-color));
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85rem; color: #fff; flex-shrink: 0;
+        }
+        .agent-info { display: flex; align-items: center; gap: 12px; }
+        .agent-name { font-weight: 600; font-size: 0.9rem; }
+        .agent-id   { font-size: 0.75rem; color: var(--text-dim); }
+        .position-badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 600; letter-spacing: 0.5px;
+            background: rgba(99,102,241,0.15); color: var(--accent-blue);
+        }
+        /* Detail Panel */
+        .detail-panel {
+            position: fixed; top: 0; right: -480px; width: 460px; height: 100vh;
+            background: #111827; /* Solid dark background to prevent bleed-through */
+            border-left: 1px solid var(--border-color);
+            z-index: 2000; transition: right 0.3s ease; display: flex; flex-direction: column;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            overflow: hidden; /* Control scroll in panel-body instead */
+        }
+        .detail-panel.open { right: 0; }
+        
+        #panel-body {
+            flex: 1;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .detail-panel-header {
+            padding: 24px; display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            background: #111827; z-index: 10;
+        }
+        .detail-panel-header h3 { margin: 0; font-size: 1.1rem; }
+        .panel-close-btn {
+            background: rgba(255,255,255,0.05); border: none; color: var(--text-dim); cursor: pointer; font-size: 1.4rem;
+            display: flex; align-items: center; padding: 6px; border-radius: 50%;
+        }
+        .panel-close-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .detail-section { padding: 20px 24px; border-bottom: 1px solid var(--border-color); }
+        .detail-section h4 { margin: 0 0 14px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); }
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .detail-item label { display: block; font-size: 0.72rem; color: var(--text-dim); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .detail-item span { font-size: 0.9rem; font-weight: 500; color: var(--text-primary); }
+        .detail-item.full { grid-column: 1 / -1; }
+        .agent-hero { padding: 24px; display: flex; align-items: center; gap: 16px; background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1)); }
+        .agent-hero-avatar {
+            width: 64px; height: 64px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-blue), var(--primary-color));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; font-weight: 700; color: #fff; flex-shrink: 0;
+        }
+        .agent-hero-name { font-size: 1.1rem; font-weight: 700; }
+        .agent-hero-id { font-size: 0.8rem; color: var(--text-dim); margin-top: 2px; }
+        .agent-hero-pos { margin-top: 6px; }
+        .panel-actions { padding: 12px 24px; display: flex; gap: 10px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color); }
+        .panel-actions .btn-action { flex: 1; justify-content: center; font-size: 0.85rem; padding: 10px; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1999; display: none; backdrop-filter: blur(4px); }
+        .overlay.show { display: block; }
+
+        /* Edit Form Styles */
+        .edit-input {
+            width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(15, 23, 42, 0.6); color: white; font-family: inherit; font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        .edit-input:focus { border-color: var(--accent-blue); outline: none; background: rgba(15, 23, 42, 0.9); }
+        
+        .save-footer {
+            padding: 20px 24px; background: #111827;
+            border-top: 1px solid var(--border-color); display: flex; gap: 12px;
+            z-index: 100;
+        }
+        .detail-section.editing { background: rgba(99,102,241,0.03); }
+        .search-bar-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .search-bar-wrap input {
+            background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-primary);
+            padding: 9px 16px; border-radius: 8px; font-size: 0.9rem; width: 280px; font-family: 'Outfit', sans-serif;
+        }
+        .search-bar-wrap input:focus { outline: none; border-color: var(--accent-blue); }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="overlay" id="panel-overlay"></div>
+
+    <!-- Detail Side Panel -->
+    <div class="detail-panel" id="agent-detail-panel">
+        <div class="detail-panel-header">
+            <h3>Agent Details</h3>
+            <button class="panel-close-btn" id="close-panel"><ion-icon name="close-outline"></ion-icon></button>
+        </div>
+        <div id="panel-body">
+            <div style="text-align:center; padding: 60px 20px; color: var(--text-dim);">
+                <ion-icon name="person-circle-outline" style="font-size: 48px;"></ion-icon>
+                <p>Select an agent to view details</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar Navigation (Modular) -->
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <button class="menu-btn" id="open-sidebar"><ion-icon name="menu-outline"></ion-icon></button>
+                <div class="header-search">
+                    <ion-icon name="search-outline"></ion-icon>
+                    <input type="text" placeholder="Search anything...">
+                </div>
+                <div class="header-profile">
+                    <div class="avatar"><img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Admin"></div>
+                </div>
+            </header>
+
+            <div class="dashboard-content accounts-content">
+                <div class="welcome-banner" style="margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h1>Agent Accounts</h1>
+                        <p>View, manage, and monitor all registered agents.</p>
+                    </div>
+                    <a href="../registration_folder/index.php" class="btn-action btn-primary" style="text-decoration:none;">
+                        <ion-icon name="person-add-outline"></ion-icon> Register Agent
+                    </a>
+                </div>
+
+                <!-- Search + Tabs -->
+                <div class="search-bar-wrap">
+                    <input type="text" id="agent-search" placeholder="Search by name, ID, or email…">
+                    <button class="btn-action btn-secondary" id="btn-search" style="padding: 9px 18px; font-size:0.85rem;">
+                        <ion-icon name="search-outline"></ion-icon> Search
+                    </button>
+                </div>
+
+                <div class="tabs-container">
+                    <button class="tab active" data-status="All">All</button>
+                    <button class="tab" data-status="Active">Active</button>
+                    <button class="tab" data-status="Inactive">Inactive</button>
+                </div>
+
+                <!-- Table -->
+                <div class="table-container fade-in">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>AGENT</th>
+                                <th>AGENT ID</th>
+                                <th>POSITION / RANK</th>
+                                <th>STATUS</th>
+                                <th>REGISTERED</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agents-table-body">
+                            <tr class="loading-row">
+                                <td colspan="6" style="text-align:center; padding:40px;">
+                                    <div class="loader" style="margin:0 auto; border-top-color: var(--primary-color);"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/sidebar-module.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/agent_accounts.js"></script>
+</body>
+</html>

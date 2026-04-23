@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register New Member - Pridens Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/register_member.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-placeholder">A</div>
+                <h2>Admin</h2>
+                <button class="mobile-toggle" id="close-sidebar"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">
+                    <ion-icon name="home-outline"></ion-icon>
+                    <span>Dashboard</span>
+                </a>
+                
+                <div class="nav-group">
+                    <div class="nav-item nav-item-has-children active" id="subscribers-menu-toggle">
+                        <div class="nav-item-icon-text">
+                            <ion-icon name="people-outline"></ion-icon>
+                            <span>Subscribers</span>
+                        </div>
+                        <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+                    </div>
+                    <ul class="sub-menu open" id="subscribers-submenu">
+                        <li><a href="accounts.html" class="sub-item active">Accounts</a></li>
+                        <li><a href="insurance_approvals.html" class="sub-item">Insurance</a></li>
+                        <li><a href="subscription_plans.html" class="sub-item">Subscription Plans</a></li>
+                        <li><a href="pvoucher_ledger.html" class="sub-item">P-Voucher Ledger</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-item nav-item-has-children" id="pos-menu-toggle">
+                        <div class="nav-item-icon-text">
+                            <ion-icon name="cart-outline"></ion-icon>
+                            <span>POS Management</span>
+                        </div>
+                        <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+                    </div>
+                    <ul class="sub-menu" id="pos-submenu">
+                        <li><a href="products.html" class="sub-item">Products</a></li>
+                        <li><a href="#" class="sub-item">Inventory</a></li>
+                        <li><a href="#" class="sub-item">Transactions</a></li>
+                        <li><a href="#" class="sub-item">Reports</a></li>
+                    </ul>
+                </div>
+                
+                <div class="nav-group">
+                    <div class="nav-item nav-item-has-children" id="agents-menu-toggle">
+                        <div class="nav-item-icon-text">
+                            <ion-icon name="briefcase-outline"></ion-icon>
+                            <span>Agents</span>
+                        </div>
+                        <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+                    </div>
+                    <ul class="sub-menu" id="agents-submenu">
+                        <li><a href="agent_accounts.html" class="sub-item">Manage Accounts</a></li>
+                        <li><a href="agent_ranks.html" class="sub-item">Ranks & Qualifications</a></li>
+                        <li><a href="agent_teams.html" class="sub-item">Manage Teams</a></li>
+                        <li><a href="agent_applications.html" class="sub-item">Applications</a></li>
+                        <li><a href="agent_app_forms.html" class="sub-item">App Forms</a></li>
+                        <li><a href="agent_commissions.html" class="sub-item">Commissions</a></li>
+                        <li><a href="agent_encashments.html" class="sub-item">Encashments</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-header">
+                <button class="menu-btn" id="open-sidebar"><ion-icon name="menu-outline"></ion-icon></button>
+                <div class="header-search">
+                    <ion-icon name="search-outline"></ion-icon>
+                    <input type="text" placeholder="Search...">
+                </div>
+                <div class="header-profile">
+                    <div class="notification-bell"><ion-icon name="notifications-outline"></ion-icon></div>
+                    <div class="avatar"><img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Admin"></div>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <div class="welcome-banner" style="margin-bottom: 30px;">
+                    <h1>Register New Member</h1>
+                    <p>Complete the steps below to onboard a new subscriber into the Pridens system.</p>
+                </div>
+
+                <!-- Registration Wizard -->
+                <div class="registration-wizard fade-in">
+                    <!-- Progress Bar -->
+                    <div class="wizard-progress">
+                        <div class="progress-step active" data-step="1">
+                            <div class="step-num">1</div>
+                            <span class="step-label">Payment</span>
+                        </div>
+                        <div class="progress-line"></div>
+                        <div class="progress-step" data-step="2">
+                            <div class="step-num">2</div>
+                            <span class="step-label">Personal</span>
+                        </div>
+                        <div class="progress-line"></div>
+                        <div class="progress-step" data-step="3">
+                            <div class="step-num">3</div>
+                            <span class="step-label">Contact</span>
+                        </div>
+                        <div class="progress-line"></div>
+                        <div class="progress-step" data-step="4">
+                            <div class="step-num">4</div>
+                            <span class="step-label">Address</span>
+                        </div>
+                        <div class="progress-line"></div>
+                        <div class="progress-step" data-step="5">
+                            <div class="step-num">5</div>
+                            <span class="step-label">Beneficiaries</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 1: Payment & Referral -->
+                    <div class="step-content active" id="step-1">
+                        <div class="step-header">
+                            <ion-icon name="card-outline"></ion-icon>
+                            <h3>Payment & Referral</h3>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label>Payment Reference (Sales Invoice Number)</label>
+                                <div class="input-with-button">
+                                    <input type="text" id="si_number" placeholder="Enter OR/SI from POS e.g. 000001">
+                                    <button type="button" class="btn-verify" id="verify-si">Verify SI</button>
+                                </div>
+                                <div class="field-feedback" id="si-feedback" style="display:none;"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Subscribed Plan</label>
+                                <input type="text" id="plan_type" readonly placeholder="Auto-fills on SI verification">
+                                <input type="hidden" id="plan_id">
+                            </div>
+                            <div class="form-group">
+                                <label>Agent Referral Code</label>
+                                <div class="input-with-button">
+                                    <input type="text" id="agent_code" placeholder="AG-0000001">
+                                    <button type="button" class="btn-verify" id="verify-agent">Check</button>
+                                </div>
+                                <div class="field-feedback" id="agent-feedback" style="display:none;"></div>
+                                <input type="text" id="agent_name" readonly style="margin-top:8px; display:none;" class="readonly-display">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Personal Information -->
+                    <div class="step-content" id="step-2">
+                        <div class="step-header">
+                            <ion-icon name="person-outline"></ion-icon>
+                            <h3>Personal Information</h3>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Last Name</label>
+                                <input type="text" id="last_name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>First Name</label>
+                                <input type="text" id="first_name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Middle Name (Optional)</label>
+                                <input type="text" id="middle_name">
+                            </div>
+                            <div class="form-group">
+                                <label>Suffix</label>
+                                <select id="suffix">
+                                    <option value="">None</option>
+                                    <option value="Jr.">Jr.</option>
+                                    <option value="Sr.">Sr.</option>
+                                    <option value="II">II</option>
+                                    <option value="III">III</option>
+                                    <option value="IV">IV</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Date of Birth</label>
+                                <input type="date" id="dob" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Place of Birth</label>
+                                <input type="text" id="place_of_birth" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Gender</label>
+                                <select id="gender" required>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Civil Status</label>
+                                <select id="civil_status" required>
+                                    <option value="Single">Single</option>
+                                    <option value="Married">Married</option>
+                                    <option value="Widowed">Widowed</option>
+                                    <option value="Separated">Separated</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Nationality</label>
+                                <select id="nationality" required>
+                                    <option value="Filipino" selected>Filipino</option>
+                                    <option value="American">American</option>
+                                    <option value="British">British</option>
+                                    <option value="Chinese">Chinese</option>
+                                    <option value="Japanese">Japanese</option>
+                                    <option value="Korean">Korean</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Occupation</label>
+                                <input type="text" id="occupation" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Contact -->
+                    <div class="step-content" id="step-3">
+                        <div class="step-header">
+                            <ion-icon name="call-outline"></ion-icon>
+                            <h3>Contact Information</h3>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Active Email Address</label>
+                                <input type="email" id="email" required placeholder="example@mail.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Contact Number</label>
+                                <div class="phone-input">
+                                    <select id="country_code">
+                                        <option value="+63" selected>🇵🇭 +63</option>
+                                        <option value="+1">🇺🇸 +1</option>
+                                        <option value="+44">🇬🇧 +44</option>
+                                        <option value="+86">🇨🇳 +86</option>
+                                        <option value="+81">🇯🇵 +81</option>
+                                    </select>
+                                    <input type="tel" id="contact_number" required placeholder="9123456789">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Source of Income</label>
+                                <input type="text" id="source_of_income" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Monthly Income</label>
+                                <input type="number" id="monthly_income" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Address -->
+                    <div class="step-content" id="step-4">
+                        <div class="step-header">
+                            <ion-icon name="location-outline"></ion-icon>
+                            <h3>Address Information</h3>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label>House No./Street/Subd.</label>
+                                <input type="text" id="house_street" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Province</label>
+                                <select id="province" required>
+                                    <option value="">Select Province</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>City/Municipality</label>
+                                <select id="city" required disabled>
+                                    <option value="">Select City First</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Barangay</label>
+                                <select id="barangay" required disabled>
+                                    <option value="">Select Barangay First</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Zip Code</label>
+                                <input type="text" id="zip_code" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Beneficiaries -->
+                    <div class="step-content" id="step-5">
+                        <div class="step-header">
+                            <ion-icon name="heart-outline"></ion-icon>
+                            <h3>Beneficiaries (Max 3)</h3>
+                        </div>
+                        <div id="beneficiaries-list" class="beneficiaries-list">
+                            <!-- Beneficiary items injected here -->
+                        </div>
+                        <button type="button" class="btn-add-ben" id="add-beneficiary">
+                            <ion-icon name="add-outline"></ion-icon> Add Beneficiary
+                        </button>
+                    </div>
+
+                    <!-- Wizard Actions -->
+                    <div class="wizard-actions">
+                        <button type="button" class="btn-prev" id="btn-prev" style="display:none;">Back</button>
+                        <button type="button" class="btn-next" id="btn-next">Next</button>
+                        <button type="button" class="btn-submit" id="btn-submit" style="display:none;">Finalize Registration</button>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="js/register_member.js"></script>
+</body>
+</html>

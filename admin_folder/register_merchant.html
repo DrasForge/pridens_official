@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Merchant - Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        /* ── WIZARD LAYOUT ── */
+        .wizard-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+        }
+        .wizard-header {
+            padding: 36px 40px 28px;
+            text-align: center;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .wizard-header h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 6px; }
+        .wizard-header p  { color: var(--text-dim); font-size: 0.95rem; }
+
+        /* ── STEPPER ── */
+        .stepper {
+            display: flex;
+            justify-content: space-between;
+            padding: 28px 60px;
+            position: relative;
+            overflow: hidden;
+        }
+        .stepper::before {
+            content: '';
+            position: absolute;
+            top: 50px; left: 100px; right: 100px;
+            height: 2px;
+            background: var(--border-color);
+            z-index: 1;
+        }
+        .stepper-step {
+            display: flex; flex-direction: column; align-items: center;
+            width: 120px; position: relative; z-index: 2;
+        }
+        .step-bubble {
+            width: 46px; height: 46px; border-radius: 14px;
+            background: rgba(255,255,255,0.06);
+            border: 2px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; color: var(--text-dim);
+            transition: all 0.35s cubic-bezier(0.175,0.885,0.32,1.275);
+        }
+        .stepper-step.active .step-bubble {
+            background: #6366f1; border-color: #6366f1; color: #fff;
+            transform: scale(1.12); box-shadow: 0 0 22px rgba(99,102,241,0.5);
+        }
+        .stepper-step.done .step-bubble {
+            background: #22c55e; border-color: #22c55e; color: #fff;
+        }
+        .step-label {
+            margin-top: 10px; font-size: 0.78rem; font-weight: 600;
+            color: var(--text-dim); text-align: center; white-space: nowrap;
+        }
+        .stepper-step.active .step-label,
+        .stepper-step.done  .step-label { color: #fff; }
+
+        /* ── WIZARD BODY ── */
+        .wizard-body { padding: 40px; }
+        .step-panel { display: none; animation: fadeSlideUp 0.4s ease; }
+        .step-panel.active { display: block; }
+
+        @keyframes fadeSlideUp {
+            from { opacity:0; transform: translateY(16px); }
+            to   { opacity:1; transform: translateY(0); }
+        }
+
+        /* ── FORMS ── */
+        .fg { margin-bottom: 20px; }
+        .fg label { display: block; margin-bottom: 7px; font-size: 0.82rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: .05em; }
+        .fg input, .fg select, .fg textarea {
+            width: 100%; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color);
+            color: #fff; border-radius: 10px; padding: 11px 14px; font-size: 0.92rem;
+            font-family: 'Outfit', sans-serif; box-sizing: border-box; transition: border-color .2s;
+        }
+        .fg input:focus, .fg select:focus, .fg textarea:focus { outline: none; border-color: #6366f1; background: rgba(99,102,241,0.08); }
+        .fg select option, .fg select optgroup { background: #1e293b; color: #fff; }
+        .fg textarea { resize: vertical; min-height: 80px; }
+        .fg .input-hint { font-size: 0.75rem; margin-top: 5px; }
+        .hint-ok  { color: #4ade80; }
+        .hint-err { color: #f87171; }
+        .hint-muted { color: var(--text-dim); }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        .fg.full { grid-column: 1 / -1; }
+
+        /* ── BUSINESS TYPE CARDS ── */
+        .biz-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+        .biz-type-card {
+            padding: 28px 24px; border: 2px solid var(--border-color); border-radius: 16px;
+            text-align: center; cursor: pointer; transition: all 0.25s;
+            background: rgba(255,255,255,0.03);
+        }
+        .biz-type-card:hover { border-color: #6366f1; background: rgba(99,102,241,0.08); }
+        .biz-type-card.selected { border-color: #6366f1; background: rgba(99,102,241,0.15); box-shadow: 0 0 20px rgba(99,102,241,0.25); }
+        .biz-type-card ion-icon { font-size: 2.8rem; color: #6366f1; display: block; margin-bottom: 14px; }
+        .biz-type-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+        .biz-type-card p  { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; }
+
+        /* ── FILE UPLOAD CARDS ── */
+        .upload-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+        .upload-card {
+            border: 2px dashed var(--border-color); border-radius: 12px; padding: 22px 16px;
+            text-align: center; cursor: pointer; transition: all 0.2s;
+            background: rgba(255,255,255,0.02); position: relative;
+        }
+        .upload-card:hover { border-color: #6366f1; background: rgba(99,102,241,0.06); }
+        .upload-card.has-file { border-color: #22c55e; background: rgba(34,197,94,0.05); border-style: solid; }
+        .upload-card input[type="file"] { display: none; }
+        .upload-card ion-icon { font-size: 2rem; color: #6366f1; display: block; margin: 0 auto 10px; }
+        .upload-card.has-file ion-icon { color: #22c55e; }
+        .upload-card .upload-label  { font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+        .upload-card .upload-hint   { font-size: 0.75rem; color: var(--text-dim); }
+        .upload-card .upload-fname  { font-size: 0.72rem; color: #22c55e; margin-top: 8px; word-break: break-all; }
+        .upload-card .req-badge { position: absolute; top:8px; right:8px; background:rgba(239,68,68,.2); color:#f87171; font-size:.65rem; padding:1px 6px; border-radius:999px; font-weight:700; }
+
+        /* ── MAP ── */
+        #merchantMap { height: 280px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 16px; }
+
+        /* ── SCHEDULE ── */
+        .schedule-box { background: rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:12px; padding:16px 20px; }
+        .schedule-row { display: grid; grid-template-columns: 40px 120px 1fr 1fr; gap:12px; align-items:center; padding: 8px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+        .schedule-row:last-child { border-bottom: none; }
+        .day-name { font-weight: 600; font-size: .88rem; }
+
+        /* ── STEP SECTION TITLE ── */
+        .section-title { font-size: 1.05rem; font-weight: 700; color: #fff; margin: 28px 0 18px; padding-bottom:10px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; gap:8px; }
+        .section-title ion-icon { color:#6366f1; font-size:1.1rem; }
+
+        /* ── REVIEW ── */
+        .review-block { background: rgba(255,255,255,0.04); border:1px solid var(--border-color); border-radius:12px; padding:20px; margin-bottom:16px; }
+        .review-block h4 { font-size:.85rem; font-weight:700; color:#6366f1; text-transform:uppercase; letter-spacing:.07em; margin-bottom:14px; }
+        .review-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:.88rem; }
+        .review-row:last-child { border-bottom:none; }
+        .review-row span:first-child { color: var(--text-dim); }
+        .review-row span:last-child  { font-weight:600; text-align:right; max-width:60%; }
+
+        /* ── FOOTER ── */
+        .wizard-footer {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:24px 40px; background:rgba(15,23,42,.8);
+            border-top:1px solid var(--border-color);
+        }
+        .step-counter { font-size:.85rem; color:var(--text-dim); }
+
+        /* ── PH LOCATION INPUT WITH LOADING ── */
+        .ph-loc-group { position:relative; }
+        .ph-loc-spinner { position:absolute; right:12px; top:50%; transform:translateY(-50%); display:none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .ph-loc-spinner.visible { display:block; animation: spin .6s linear infinite; }
+    </style>
+</head>
+<body class="dashboard-body">
+<div class="background-animation">
+    <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+</div>
+
+<div class="dashboard-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <button class="menu-btn" id="open-sidebar"><ion-icon name="menu-outline"></ion-icon></button>
+            <div class="header-profile">
+                <div class="avatar"><img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Admin"></div>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+            <div class="wizard-wrapper">
+                <!-- Header -->
+                <div class="wizard-header">
+                    <h1><ion-icon name="storefront-outline" style="font-size:1.2em;vertical-align:middle;margin-right:10px;color:#6366f1;"></ion-icon>New Merchant Onboarding</h1>
+                    <p>Register a new merchant partner to the Pridens ecosystem.</p>
+                </div>
+
+                <!-- Stepper -->
+                <div class="stepper">
+                    <div class="stepper-step active" id="step-mark-1">
+                        <div class="step-bubble"><ion-icon name="business-outline"></ion-icon></div>
+                        <div class="step-label">Business Type</div>
+                    </div>
+                    <div class="stepper-step" id="step-mark-2">
+                        <div class="step-bubble"><ion-icon name="person-outline"></ion-icon></div>
+                        <div class="step-label">Representative</div>
+                    </div>
+                    <div class="stepper-step" id="step-mark-3">
+                        <div class="step-bubble"><ion-icon name="location-outline"></ion-icon></div>
+                        <div class="step-label">Location & Ops</div>
+                    </div>
+                    <div class="stepper-step" id="step-mark-4">
+                        <div class="step-bubble"><ion-icon name="checkmark-done-outline"></ion-icon></div>
+                        <div class="step-label">Review & Submit</div>
+                    </div>
+                </div>
+
+                <form id="onboardingForm" enctype="multipart/form-data">
+                <input type="hidden" name="business_type" id="hidden_biz_type">
+                <input type="hidden" name="opening_hours" id="hidden_opening_hours">
+                <input type="hidden" name="latitude" id="hidden_lat">
+                <input type="hidden" name="longitude" id="hidden_lng">
+
+                <div class="wizard-body">
+                    <!-- ===== STEP 1: BUSINESS TYPE ===== -->
+                    <div class="step-panel active" id="panel-1">
+                        <div class="biz-type-grid">
+                            <div class="biz-type-card" id="card-individual" onclick="selectBizType('Individual / Sole Proprietor','card-individual')">
+                                <ion-icon name="person-circle-outline"></ion-icon>
+                                <h3>Individual / Sole Proprietor</h3>
+                                <p>For business owners or freelancers operating under their own name or a registered trade name (DTI).</p>
+                            </div>
+                            <div class="biz-type-card" id="card-corporate" onclick="selectBizType('Corporate / Company','card-corporate')">
+                                <ion-icon name="business-outline"></ion-icon>
+                                <h3>Corporate / Company</h3>
+                                <p>For corporations, partnerships, cooperatives, or one-person corporations (OPC) registered with the SEC.</p>
+                            </div>
+                        </div>
+
+                        <div class="section-title"><ion-icon name="storefront-outline"></ion-icon> Store & Business Information</div>
+                        <div class="grid-2">
+                            <div class="fg">
+                                <label>Registered Business Name <span style="color:#f87171">*</span></label>
+                                <input type="text" name="business_name" id="biz_name" required placeholder="e.g. Juan's Trading Co.">
+                            </div>
+                            <div class="fg">
+                                <label>Business Category <span style="color:#f87171">*</span></label>
+                                <select name="business_category" required>
+                                    <option value="">Select Category...</option>
+                                    <option value="Agriculture & Forestry">Agriculture & Forestry</option>
+                                    <option value="Apparel & Fashion">Apparel & Fashion</option>
+                                    <option value="Automotive & Auto Parts">Automotive & Auto Parts</option>
+                                    <option value="Beauty & Personal Care">Beauty & Personal Care</option>
+                                    <option value="Cafe & Coffee Shop">Cafe & Coffee Shop</option>
+                                    <option value="Construction & Hardware">Construction & Hardware</option>
+                                    <option value="Education & Training">Education & Training</option>
+                                    <option value="Electronics & Gadgets">Electronics & Gadgets</option>
+                                    <option value="Food & Beverage / Restaurant">Food & Beverage / Restaurant</option>
+                                    <option value="Grocery & Supermarket">Grocery & Supermarket</option>
+                                    <option value="Healthcare & Medical">Healthcare & Medical</option>
+                                    <option value="Home & Furniture">Home & Furniture</option>
+                                    <option value="Hotel & Accommodation">Hotel & Accommodation</option>
+                                    <option value="Manufacturing & Industrial">Manufacturing & Industrial</option>
+                                    <option value="Pharmacy & Pharmaceuticals">Pharmacy & Pharmaceuticals</option>
+                                    <option value="Real Estate & Leasing">Real Estate & Leasing</option>
+                                    <option value="Retail & Consumer Goods">Retail & Consumer Goods</option>
+                                    <option value="Tech & Digital">Tech & Digital</option>
+                                    <option value="Travel & Tours">Travel & Tours</option>
+                                    <option value="Wholesale & Distribution">Wholesale & Distribution</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="fg">
+                                <label>Business TIN</label>
+                                <input type="text" name="business_tin" placeholder="000-000-000-000">
+                            </div>
+                            <div class="fg">
+                                <label>Business Contact Number <span style="color:#f87171">*</span></label>
+                                <input type="text" name="business_contact" required placeholder="+63 912-345-6789">
+                            </div>
+                            <div class="fg full">
+                                <label>Business Email <span style="color:#f87171">*</span></label>
+                                <input type="email" name="business_email" required placeholder="store@business.com">
+                            </div>
+                        </div>
+
+                        <div class="section-title"><ion-icon name="university-outline"></ion-icon> Bank / Payout Details</div>
+                        <div class="grid-2">
+                            <div class="fg full">
+                                <label>Bank / E-Wallet <span style="color:#f87171">*</span></label>
+                                <select name="bank_name" required>
+                                    <option value="">Select Bank / E-Wallet...</option>
+                                    <optgroup label="E-Wallets">
+                                        <option value="GCash">GCash</option>
+                                        <option value="Maya">Maya</option>
+                                        <option value="ShopeePay">ShopeePay</option>
+                                    </optgroup>
+                                    <optgroup label="Universal Banks">
+                                        <option value="BDO">BDO</option>
+                                        <option value="BPI">BPI</option>
+                                        <option value="Metrobank">Metrobank</option>
+                                        <option value="UnionBank">UnionBank</option>
+                                        <option value="PNB">PNB</option>
+                                        <option value="Security Bank">Security Bank</option>
+                                        <option value="RCBC">RCBC</option>
+                                        <option value="EastWest Bank">EastWest Bank</option>
+                                        <option value="Landbank">Landbank</option>
+                                        <option value="DBP">DBP (Development Bank)</option>
+                                    </optgroup>
+                                    <optgroup label="Rural / Thrift Banks">
+                                        <option value="Other Bank">Other Bank</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="fg">
+                                <label>Account Name <span style="color:#f87171">*</span></label>
+                                <input type="text" name="bank_account_name" required placeholder="Account holder name">
+                            </div>
+                            <div class="fg">
+                                <label>Account Number <span style="color:#f87171">*</span></label>
+                                <input type="text" name="bank_account_number" required placeholder="Account number / mobile number">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== STEP 2: REPRESENTATIVE ===== -->
+                    <div class="step-panel" id="panel-2">
+                        <div class="section-title"><ion-icon name="person-outline"></ion-icon> Owner / Representative</div>
+                        <div class="grid-3">
+                            <div class="fg">
+                                <label>First Name <span style="color:#f87171">*</span></label>
+                                <input type="text" name="rep_first_name" required placeholder="Juan">
+                            </div>
+                            <div class="fg">
+                                <label>Last Name <span style="color:#f87171">*</span></label>
+                                <input type="text" name="rep_last_name" required placeholder="Dela Cruz">
+                            </div>
+                            <div class="fg">
+                                <label>Middle Name</label>
+                                <input type="text" name="rep_middle_name" placeholder="Santos">
+                            </div>
+                        </div>
+                        <div class="grid-2">
+                            <div class="fg">
+                                <label>Contact Number <span style="color:#f87171">*</span></label>
+                                <input type="text" name="representative_contact" required placeholder="+63 912-345-6789">
+                            </div>
+                            <div class="fg">
+                                <label>Government ID Type <span style="color:#f87171">*</span></label>
+                                <select name="rep_id_type" required>
+                                    <option value="">Select ID Type...</option>
+                                    <option value="PhilID">PhilID</option>
+                                    <option value="Passport">Passport</option>
+                                    <option value="Driver's License">Driver's License</option>
+                                    <option value="UMID">UMID</option>
+                                    <option value="SSS ID">SSS ID</option>
+                                    <option value="GSIS ID">GSIS ID</option>
+                                    <option value="Postal ID">Postal ID</option>
+                                    <option value="PRC ID">PRC ID</option>
+                                    <option value="Voter's ID">Voter's ID</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="section-title"><ion-icon name="lock-closed-outline"></ion-icon> Merchant Login Account</div>
+                        <div class="grid-2">
+                            <div class="fg">
+                                <label>Email Address <span style="color:#f87171">*</span></label>
+                                <input type="email" name="email" id="rep_email" required placeholder="merchant@email.com" onblur="checkEmail(this.value)">
+                                <div class="input-hint hint-muted" id="email_hint">This will be the merchant's login email.</div>
+                            </div>
+                            <div class="fg">
+                                <label>Temporary Password <span style="color:#f87171">*</span></label>
+                                <input type="password" name="password" id="rep_pass" required placeholder="Min. 8 characters" oninput="checkPasswords()">
+                            </div>
+                            <div class="fg">
+                                <label>Confirm Password <span style="color:#f87171">*</span></label>
+                                <input type="password" id="rep_pass_confirm" required placeholder="Re-enter password" oninput="checkPasswords()">
+                                <div class="input-hint" id="pass_hint"></div>
+                            </div>
+                        </div>
+
+                        <div class="section-title"><ion-icon name="id-card-outline"></ion-icon> Government ID Uploads</div>
+                        <div class="upload-grid">
+                            <div class="upload-card" id="card-id-front" onclick="triggerUpload('up_id_front', this)">
+                                <div class="req-badge">Required</div>
+                                <input type="file" id="up_id_front" name="rep_id_front" accept="image/*,application/pdf" onchange="handleUpload(this,'card-id-front','fname-id-front')">
+                                <ion-icon name="id-card-outline"></ion-icon>
+                                <div class="upload-label">ID Front Side</div>
+                                <div class="upload-hint">JPG, PNG, or PDF</div>
+                                <div class="upload-fname" id="fname-id-front"></div>
+                            </div>
+                            <div class="upload-card" id="card-id-back" onclick="triggerUpload('up_id_back', this)">
+                                <div class="req-badge">Required</div>
+                                <input type="file" id="up_id_back" name="rep_id_back" accept="image/*,application/pdf" onchange="handleUpload(this,'card-id-back','fname-id-back')">
+                                <ion-icon name="card-outline"></ion-icon>
+                                <div class="upload-label">ID Back Side</div>
+                                <div class="upload-hint">JPG, PNG, or PDF</div>
+                                <div class="upload-fname" id="fname-id-back"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== STEP 3: LOCATION & OPERATIONS ===== -->
+                    <div class="step-panel" id="panel-3">
+                        <div class="section-title"><ion-icon name="location-outline"></ion-icon> Business Address</div>
+                        <div class="grid-3">
+                            <div class="fg">
+                                <label>Province <span style="color:#f87171">*</span></label>
+                                <div class="ph-loc-group">
+                                    <select id="loc_province" name="province" required onchange="loadCities(this.value)">
+                                        <option value="">Loading provinces...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="fg">
+                                <label>City / Municipality <span style="color:#f87171">*</span></label>
+                                <select id="loc_city" name="city_municipality" required onchange="loadBarangays(this.value)">
+                                    <option value="">Select province first</option>
+                                </select>
+                            </div>
+                            <div class="fg">
+                                <label>Barangay</label>
+                                <select id="loc_brgy" name="barangay">
+                                    <option value="">Select city first</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="fg">
+                            <label>Street / Building / Unit <span style="color:#f87171">*</span></label>
+                            <textarea name="location" required placeholder="e.g. Unit 4B, Acacia Building, Rizal Street"></textarea>
+                        </div>
+
+                        <div class="section-title"><ion-icon name="map-outline"></ion-icon> Pin on Map</div>
+                        <div id="merchantMap"></div>
+
+                        <div class="section-title"><ion-icon name="time-outline"></ion-icon> Operating Hours</div>
+                        <label style="display:flex;align-items:center;gap:10px;margin-bottom:16px;cursor:pointer;">
+                            <input type="checkbox" id="chk247" onchange="toggle247(this.checked)" style="width:auto;margin:0;">
+                            <span style="font-size:.9rem;">Open 24/7 (Entire Week)</span>
+                        </label>
+                        <div class="schedule-box" id="scheduleBox">
+                            <!-- Days injected by JS -->
+                        </div>
+
+                        <div class="section-title" style="margin-top:28px;"><ion-icon name="document-text-outline"></ion-icon> Business Documents</div>
+                        <div class="upload-grid">
+                            <div class="upload-card" id="card-dti" onclick="triggerUpload('up_dti', this)">
+                                <input type="file" id="up_dti" name="dti_cert" accept="image/*,application/pdf" onchange="handleUpload(this,'card-dti','fname-dti')">
+                                <ion-icon name="document-outline"></ion-icon>
+                                <div class="upload-label">DTI / SEC Certificate</div>
+                                <div class="upload-hint">PDF or image</div>
+                                <div class="upload-fname" id="fname-dti"></div>
+                            </div>
+                            <div class="upload-card" id="card-bir" onclick="triggerUpload('up_bir', this)">
+                                <input type="file" id="up_bir" name="bir_cert" accept="image/*,application/pdf" onchange="handleUpload(this,'card-bir','fname-bir')">
+                                <ion-icon name="receipt-outline"></ion-icon>
+                                <div class="upload-label">BIR Certificate</div>
+                                <div class="upload-hint">Certificate of registration</div>
+                                <div class="upload-fname" id="fname-bir"></div>
+                            </div>
+                            <div class="upload-card" id="card-permit" onclick="triggerUpload('up_permit', this)">
+                                <input type="file" id="up_permit" name="business_permit" accept="image/*,application/pdf" onchange="handleUpload(this,'card-permit','fname-permit')">
+                                <ion-icon name="shield-checkmark-outline"></ion-icon>
+                                <div class="upload-label">Mayor's Business Permit</div>
+                                <div class="upload-hint">Current year permit</div>
+                                <div class="upload-fname" id="fname-permit"></div>
+                            </div>
+                        </div>
+
+                        <div class="section-title" style="margin-top:28px;"><ion-icon name="image-outline"></ion-icon> Store Branding (Optional)</div>
+                        <div class="upload-grid">
+                            <div class="upload-card" id="card-logo" onclick="triggerUpload('up_logo', this)">
+                                <input type="file" id="up_logo" name="store_logo" accept="image/*" onchange="handleUpload(this,'card-logo','fname-logo')">
+                                <ion-icon name="aperture-outline"></ion-icon>
+                                <div class="upload-label">Store Logo</div>
+                                <div class="upload-hint">Square image recommended</div>
+                                <div class="upload-fname" id="fname-logo"></div>
+                            </div>
+                            <div class="upload-card" id="card-banner" onclick="triggerUpload('up_banner', this)">
+                                <input type="file" id="up_banner" name="store_banner" accept="image/*" onchange="handleUpload(this,'card-banner','fname-banner')">
+                                <ion-icon name="images-outline"></ion-icon>
+                                <div class="upload-label">Store Banner</div>
+                                <div class="upload-hint">1200×400 recommended</div>
+                                <div class="upload-fname" id="fname-banner"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== STEP 4: REVIEW & SUBMIT ===== -->
+                    <div class="step-panel" id="panel-4">
+                        <p style="color:var(--text-dim);margin-bottom:24px;">Please review all information before submitting. A <strong>Pending</strong> status will be assigned until the admin approves the merchant.</p>
+
+                        <div class="review-block">
+                            <h4><ion-icon name="business-outline"></ion-icon> Business Info</h4>
+                            <div class="review-row"><span>Business Type</span><span id="rv-biz-type">—</span></div>
+                            <div class="review-row"><span>Business Name</span><span id="rv-biz-name">—</span></div>
+                            <div class="review-row"><span>Category</span><span id="rv-biz-cat">—</span></div>
+                            <div class="review-row"><span>Business TIN</span><span id="rv-tin">—</span></div>
+                            <div class="review-row"><span>Business Email</span><span id="rv-biz-email">—</span></div>
+                            <div class="review-row"><span>Business Contact</span><span id="rv-biz-contact">—</span></div>
+                        </div>
+
+                        <div class="review-block">
+                            <h4><ion-icon name="person-outline"></ion-icon> Representative</h4>
+                            <div class="review-row"><span>Full Name</span><span id="rv-rep-name">—</span></div>
+                            <div class="review-row"><span>Contact</span><span id="rv-rep-contact">—</span></div>
+                            <div class="review-row"><span>Login Email</span><span id="rv-login-email">—</span></div>
+                            <div class="review-row"><span>Gov. ID Type</span><span id="rv-id-type">—</span></div>
+                        </div>
+
+                        <div class="review-block">
+                            <h4><ion-icon name="location-outline"></ion-icon> Location</h4>
+                            <div class="review-row"><span>Province</span><span id="rv-province">—</span></div>
+                            <div class="review-row"><span>City</span><span id="rv-city">—</span></div>
+                            <div class="review-row"><span>Barangay</span><span id="rv-brgy">—</span></div>
+                            <div class="review-row"><span>Street</span><span id="rv-street">—</span></div>
+                        </div>
+
+                        <div class="review-block">
+                            <h4><ion-icon name="university-outline"></ion-icon> Bank / Payout</h4>
+                            <div class="review-row"><span>Bank</span><span id="rv-bank">—</span></div>
+                            <div class="review-row"><span>Account Name</span><span id="rv-bank-name">—</span></div>
+                            <div class="review-row"><span>Account Number</span><span id="rv-bank-num">—</span></div>
+                        </div>
+                    </div>
+                </div><!-- /wizard-body -->
+
+                <!-- Footer -->
+                <div class="wizard-footer">
+                    <button type="button" class="btn-secondary" id="prevBtn" onclick="wizardNav(-1)" style="display:none;">
+                        <ion-icon name="chevron-back-outline"></ion-icon> Previous
+                    </button>
+                    <div class="step-counter" id="stepCounter">Step 1 of 4</div>
+                    <button type="button" class="btn-primary" id="nextBtn" onclick="wizardNav(1)">
+                        Next <ion-icon name="chevron-forward-outline"></ion-icon>
+                    </button>
+                    <button type="button" class="btn-primary" id="submitBtn" onclick="submitForm()" style="display:none;">
+                        <ion-icon name="checkmark-circle-outline" style="margin-right:6px;"></ion-icon> Complete & Register
+                    </button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/sidebar-module.js"></script>
+<script>
+// ── State
+let currentStep = 1;
+const totalSteps = 4;
+let map, mapMarker;
+let bizTypeSelected = '';
+let emailOk = true, passOk = false;
+
+// ── Days
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+// ── Init
+document.addEventListener('DOMContentLoaded', () => {
+    buildSchedule();
+    loadProvinces();
+});
+
+// ── Business Type
+function selectBizType(type, cardId) {
+    bizTypeSelected = type;
+    document.getElementById('hidden_biz_type').value = type;
+    document.querySelectorAll('.biz-type-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById(cardId).classList.add('selected');
+}
+
+// ── Schedule Builder
+function buildSchedule() {
+    const box = document.getElementById('scheduleBox');
+    box.innerHTML = DAYS.map(d => `
+        <div class="schedule-row" id="row-${d}">
+            <input type="checkbox" checked class="day-chk" id="chk-${d}">
+            <span class="day-name">${d}</span>
+            <input type="time" class="open-time" value="08:00">
+            <input type="time" class="close-time" value="17:00">
+        </div>
+    `).join('');
+}
+
+function toggle247(on) {
+    DAYS.forEach(d => {
+        const chk   = document.getElementById('chk-' + d);
+        const row   = document.getElementById('row-' + d);
+        const times = row.querySelectorAll('input[type="time"]');
+        chk.checked  = true;
+        chk.disabled = on;
+        times.forEach(t => { t.disabled = on; if (on) t.value = '00:00'; });
+    });
+}
+
+function buildOpeningHours() {
+    const is247 = document.getElementById('chk247').checked;
+    if (is247) return 'Open 24/7';
+    const parts = [];
+    DAYS.forEach(d => {
+        const chk = document.getElementById('chk-' + d);
+        if (!chk.checked) { parts.push(`${d.substring(0,3)}: Closed`); return; }
+        const row  = document.getElementById('row-' + d);
+        const open = row.querySelector('.open-time').value;
+        const cls  = row.querySelector('.close-time').value;
+        parts.push(`${d.substring(0,3)}: ${open}–${cls}`);
+    });
+    return parts.join(', ');
+}
+
+// ── File Upload
+function triggerUpload(inputId, card) {
+    document.getElementById(inputId).click();
+}
+function handleUpload(input, cardId, fnameId) {
+    const card = document.getElementById(cardId);
+    const disp = document.getElementById(fnameId);
+    if (input.files.length) {
+        card.classList.add('has-file');
+        disp.textContent = '✓ ' + input.files[0].name;
+    }
+}
+
+// ── PH Locations
+async function loadProvinces() {
+    const select = document.getElementById('loc_province');
+    select.innerHTML = '<option value="">Loading provinces...</option>';
+    try {
+        const res = await fetch('../admin_API/get_locations.php?type=provinces');
+        const provinces = await res.json();
+        select.innerHTML = '<option value="">Select Province/Region...</option>';
+        provinces.forEach(p => select.add(new Option(p, p)));
+    } catch(e) {
+        console.error("Error loading provinces:", e);
+        select.innerHTML = '<option value="">Error loading provinces</option>';
+    }
+}
+
+async function loadCities(provName) {
+    const citySelect = document.getElementById('loc_city');
+    const brgySelect = document.getElementById('loc_brgy');
+    citySelect.innerHTML = '<option value="">Loading...</option>';
+    brgySelect.innerHTML = '<option value="">Select city first</option>';
+    if (!provName) {
+        citySelect.innerHTML = '<option value="">Select province first</option>';
+        return;
+    }
+    try {
+        const res  = await fetch(`../admin_API/get_locations.php?type=cities&province=${encodeURIComponent(provName)}`);
+        const cities = await res.json();
+        citySelect.innerHTML = '<option value="">Select City...</option>';
+        if (Array.isArray(cities)) {
+            cities.forEach(c => citySelect.add(new Option(c, c)));
+        } else {
+            console.error("Cities is not array:", cities);
+        }
+    } catch(e) { 
+        console.error("Error loading cities:", e);
+        citySelect.innerHTML = '<option value="">Error loading cities</option>'; 
+    }
+}
+
+async function loadBarangays(cityName) {
+    const sel = document.getElementById('loc_brgy');
+    const provName = document.getElementById('loc_province').value;
+    sel.innerHTML = '<option value="">Loading...</option>';
+    if (!cityName || !provName) {
+        sel.innerHTML = '<option value="">Select city first</option>';
+        return;
+    }
+    try {
+        const res  = await fetch(`../admin_API/get_locations.php?type=barangays&province=${encodeURIComponent(provName)}&city=${encodeURIComponent(cityName)}`);
+        const barangays = await res.json();
+        sel.innerHTML = '<option value="">Select Barangay...</option>';
+        if (Array.isArray(barangays)) {
+            barangays.forEach(b => sel.add(new Option(b, b)));
+        } else {
+             console.error("Barangays is not array:", barangays);
+        }
+    } catch(e) { 
+        console.error("Error loading barangays:", e);
+        sel.innerHTML = '<option value="">Could not load</option>'; 
+    }
+}
+
+// ── Email Check
+async function checkEmail(email) {
+    const hint = document.getElementById('email_hint');
+    if (!email || !email.includes('@')) { emailOk = true; return; }
+    hint.textContent = 'Checking availability...';
+    hint.className   = 'input-hint hint-muted';
+    try {
+        const res  = await fetch(`../admin_API/check_merchant_email.php?email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+        if (data.available) {
+            hint.textContent = '✓ Email is available';
+            hint.className   = 'input-hint hint-ok';
+            emailOk = true;
+        } else {
+            hint.textContent = '✗ Email already registered';
+            hint.className   = 'input-hint hint-err';
+            emailOk = false;
+        }
+    } catch { emailOk = true; }
+}
+
+function checkPasswords() {
+    const p1 = document.getElementById('rep_pass').value;
+    const p2 = document.getElementById('rep_pass_confirm').value;
+    const h  = document.getElementById('pass_hint');
+    if (!p2) { h.textContent = ''; passOk = false; return; }
+    if (p1 === p2 && p1.length >= 8) {
+        h.textContent = '✓ Passwords match';
+        h.className   = 'input-hint hint-ok';
+        passOk = true;
+    } else {
+        h.textContent = p1 !== p2 ? '✗ Passwords do not match' : '✗ Minimum 8 characters';
+        h.className   = 'input-hint hint-err';
+        passOk = false;
+    }
+}
+
+// ── Map (initialised when Step 3 is shown)
+function initMap() {
+    if (map) { map.invalidateSize(); return; }
+    map = L.map('merchantMap').setView([7.1907, 125.4553], 12); // Davao default
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(map);
+    map.on('click', e => {
+        if (mapMarker) map.removeLayer(mapMarker);
+        mapMarker = L.marker(e.latlng).addTo(map);
+        document.getElementById('hidden_lat').value = e.latlng.lat.toFixed(7);
+        document.getElementById('hidden_lng').value = e.latlng.lng.toFixed(7);
+    });
+}
+
+// ── Review Panel
+function populateReview() {
+    const f = {};
+    const fd = new FormData(document.getElementById('onboardingForm'));
+    fd.forEach((v,k) => f[k] = v);
+
+    const provSel = document.getElementById('loc_province');
+    const citySel = document.getElementById('loc_city');
+    const brgySel = document.getElementById('loc_brgy');
+
+    document.getElementById('rv-biz-type').textContent    = bizTypeSelected || '—';
+    document.getElementById('rv-biz-name').textContent    = f.business_name || '—';
+    document.getElementById('rv-biz-cat').textContent     = f.business_category || '—';
+    document.getElementById('rv-tin').textContent         = f.business_tin || '—';
+    document.getElementById('rv-biz-email').textContent   = f.business_email || '—';
+    document.getElementById('rv-biz-contact').textContent = f.business_contact || '—';
+    document.getElementById('rv-rep-name').textContent    = `${f.rep_first_name || ''} ${f.rep_middle_name || ''} ${f.rep_last_name || ''}`.trim();
+    document.getElementById('rv-rep-contact').textContent = f.representative_contact || '—';
+    document.getElementById('rv-login-email').textContent = f.email || '—';
+    document.getElementById('rv-id-type').textContent     = f.rep_id_type || '—';
+    document.getElementById('rv-province').textContent    = provSel.options[provSel.selectedIndex]?.text || '—';
+    document.getElementById('rv-city').textContent        = citySel.options[citySel.selectedIndex]?.text || '—';
+    document.getElementById('rv-brgy').textContent        = brgySel.options[brgySel.selectedIndex]?.text || '—';
+    document.getElementById('rv-street').textContent      = f.location || '—';
+    document.getElementById('rv-bank').textContent        = f.bank_name || '—';
+    document.getElementById('rv-bank-name').textContent   = f.bank_account_name || '—';
+    document.getElementById('rv-bank-num').textContent    = f.bank_account_number || '—';
+}
+
+// ── Validate Step
+function validateStep(step) {
+    if (step === 1) {
+        if (!bizTypeSelected) { alert('Please select a business type.'); return false; }
+        const req = ['business_name','business_category','business_contact','business_email','bank_name','bank_account_name','bank_account_number'];
+        for (const f of req) {
+            const el = document.querySelector(`[name="${f}"]`);
+            if (el && !el.value.trim()) { el.focus(); alert(`Please fill in: ${el.previousElementSibling?.textContent?.replace('*','').trim() || f}`); return false; }
+        }
+    }
+    if (step === 2) {
+        if (!emailOk) { alert('The merchant email is already in use.'); return false; }
+        if (!passOk)  { alert('Password must be at least 8 characters and both fields must match.'); return false; }
+    }
+    if (step === 3) {
+        if (!document.getElementById('loc_province').value) { alert('Please select a province.'); return false; }
+        if (!document.getElementById('loc_city').value) { alert('Please select a city/municipality.'); return false; }
+    }
+    return true;
+}
+
+// ── Navigate
+function wizardNav(dir) {
+    if (dir === 1 && !validateStep(currentStep)) return;
+
+    // mark done
+    document.getElementById(`step-mark-${currentStep}`).classList.remove('active');
+    if (dir === 1) document.getElementById(`step-mark-${currentStep}`).classList.add('done');
+
+    document.getElementById(`panel-${currentStep}`).classList.remove('active');
+    currentStep += dir;
+    document.getElementById(`panel-${currentStep}`).classList.add('active');
+    document.getElementById(`step-mark-${currentStep}`).classList.remove('done');
+    document.getElementById(`step-mark-${currentStep}`).classList.add('active');
+    document.getElementById('stepCounter').textContent = `Step ${currentStep} of ${totalSteps}`;
+    document.getElementById('prevBtn').style.display   = currentStep === 1 ? 'none' : 'inline-flex';
+    document.getElementById('nextBtn').style.display   = currentStep === totalSteps ? 'none' : 'inline-flex';
+    document.getElementById('submitBtn').style.display = currentStep === totalSteps ? 'inline-flex' : 'none';
+
+    if (currentStep === 3) setTimeout(initMap, 300);
+    if (currentStep === totalSteps) { document.getElementById('hidden_opening_hours').value = buildOpeningHours(); populateReview(); }
+
+    window.scrollTo({ top: 0, behavior:'smooth' });
+}
+
+// ── Submit
+async function submitForm() {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<ion-icon name="hourglass-outline"></ion-icon> Registering...';
+
+    // Set province/city text values
+    const provSel = document.getElementById('loc_province');
+    const citySel = document.getElementById('loc_city');
+    if (provSel.selectedIndex > 0) provSel.name = 'province';
+    if (citySel.selectedIndex > 0) citySel.name = 'city_municipality';
+
+    const formData = new FormData(document.getElementById('onboardingForm'));
+
+    try {
+        const res  = await fetch('../admin_API/register_merchant.php', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.status === 'success') {
+            alert(`✓ Merchant registered successfully!\nMerchant Code: ${data.merchant_code}`);
+            window.location.href = 'merchants.html';
+        } else {
+            alert('Registration failed: ' + data.message);
+        }
+    } catch(e) {
+        alert('Network error. Please try again.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<ion-icon name="checkmark-circle-outline" style="margin-right:6px;"></ion-icon> Complete & Register';
+    }
+}
+</script>
+</body>
+</html>

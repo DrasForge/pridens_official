@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Subscription Plan - Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/subscription_plans.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --accent-blue: #0ea5e9;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --input-bg: rgba(15, 23, 42, 0.5);
+            --warning-yellow: #eab308;
+        }
+
+        .wizard-glass {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Wizard Tabs Header */
+        .wizard-tabs {
+            display: flex;
+            background: #111827;
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .wizard-tabs::-webkit-scrollbar { display: none; }
+
+        .tab-item {
+            flex: 1;
+            min-width: 140px;
+            padding: 16px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: var(--text-dim);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+        }
+        .tab-item.active {
+            color: var(--accent-blue);
+            background: rgba(14, 165, 233, 0.05);
+            border-bottom-color: var(--accent-blue);
+        }
+        .tab-item ion-icon { font-size: 18px; }
+
+        /* Form Controls */
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 24px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 13px; color: var(--text-dim); font-weight: 500; }
+        .form-group input, .form-group select {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+        .form-group input:focus { border-color: var(--accent-blue); }
+
+        /* Quota Box */
+        .quota-box {
+            background: rgba(234, 179, 8, 0.05);
+            border: 1px dashed var(--warning-yellow);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 10px;
+        }
+        .quota-box .icon { color: var(--warning-yellow); font-size: 20px; }
+        .quota-box input { width: 80px; text-align: center; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); color: white; padding: 8px; border-radius: 6px; }
+
+        /* Radio Group */
+        .radio-group { display: flex; gap: 24px; margin-top: 10px; }
+        .radio-item { display: flex; align-items: center; gap: 10px; cursor: pointer; color: white; font-size: 14px; }
+        .radio-item input[type="radio"] { width: 18px; height: 18px; accent-color: var(--accent-blue); }
+
+        /* SKU Sections */
+        .sku-section { border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; position: relative; }
+        .sku-section h4 { 
+            font-size: 12px; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .one-time-title { color: var(--accent-blue); }
+        .monthly-title { color: #f59e0b; }
+        .post-term-title { color: #10b981; }
+
+        .lookup-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-dim);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .currency-input { position: relative; }
+        .currency-input::before { content: "₱"; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 14px; }
+        .currency-input input { padding-left: 30px !important; }
+
+        .wizard-footer { padding: 20px 24px; background: #111827; display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); }
+        .btn-prev { background: hsla(0,0%,100%,.05); color: #fff; border: 1px solid var(--border-color); }
+        .btn-next { background: #0ea5e9; color: #fff; }
+        .btn-cancel { background: transparent; color: var(--text-dim); border: 1px solid var(--border-color); }
+        
+        .wizard-step { display: none; padding-bottom: 30px; }
+        .wizard-step.active { display: block; }
+        
+        .form-group input[readonly] {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+            color: var(--text-dim);
+            cursor: not-allowed;
+            /* border-style: dashed; */
+        }
+
+        .btn-wizard {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-wizard:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+            border: none;
+        }
+
+        .btn-submit:hover {
+            background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+        }
+
+        .benefit-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+
+        /* Billing Brackets Styles */
+        .info-box {
+            background: rgba(14, 165, 233, 0.05);
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        .info-box p { color: var(--text-dim); font-size: 14px; margin-bottom: 0; line-height: 1.5; }
+        .info-box .example-badge { color: #38bdf8; font-weight: 700; margin-right: 4px; }
+        
+        .bracket-card {
+            background: rgba(15, 23, 42, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 10px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .bracket-card:hover { border-color: rgba(255, 255, 255, 0.2); background: rgba(15, 23, 42, 0.4); }
+        .bracket-card .btn-remove { 
+            position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: #475569; font-size: 20px; cursor: pointer;
+            transition: color 0.2s;
+        }
+        .bracket-card .btn-remove:hover { color: #f87171; }
+        
+        .bracket-summary {
+            font-size: 13px; color: var(--text-dim); margin: 5px 0 20px 5px;
+        }
+        .bracket-summary b { color: #22d3ee; }
+        
+        .add-bracket-row {
+            display: flex; align-items: center; gap: 15px; margin-top: 15px;
+        }
+        .bracket-counter { font-size: 13px; color: #64748b; }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar and top-header would ideally be in a shared component, but copying for now -->
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-placeholder">A</div>
+                <h2>Admin Panel</h2>
+                <button class="mobile-toggle" id="close-sidebar">
+                    <ion-icon name="close-outline"></ion-icon>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">
+                    <ion-icon name="home-outline"></ion-icon>
+                    <span>Dashboard</span>
+                </a>
+                
+                <div class="nav-group">
+                    <div class="nav-item nav-item-has-children active" id="subscribers-menu-toggle">
+                        <div class="nav-item-icon-text">
+                            <ion-icon name="people-outline"></ion-icon>
+                            <span>Subscribers</span>
+                        </div>
+                        <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+                    </div>
+                    <ul class="sub-menu open" id="subscribers-submenu">
+                        <li><a href="accounts.html" class="sub-item">Accounts</a></li>
+                        <li><a href="insurance_approvals.html" class="sub-item">Insurance</a></li>
+                        <li><a href="subscription_plans.html" class="sub-item active">Subscription Plans</a></li>
+                        <li><a href="pvoucher_ledger.html" class="sub-item">P-Voucher Ledger</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-item nav-item-has-children" id="pos-menu-toggle">
+                        <div class="nav-item-icon-text">
+                            <ion-icon name="cart-outline"></ion-icon>
+                            <span>POS Management</span>
+                        </div>
+                        <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+                    </div>
+                    <ul class="sub-menu" id="pos-submenu">
+                        <li><a href="../point_of_sale_folder/index.html" class="sub-item" target="_blank">POS Terminal</a></li>
+                        <li><a href="products.html" class="sub-item">Products</a></li>
+                        <li><a href="#" class="sub-item">Inventory</a></li>
+                        <li><a href="#" class="sub-item">Transactions</a></li>
+                        <li><a href="#" class="sub-item">Reports</a></li>
+                    </ul>
+                </div>
+                
+                <div class="nav-group">
+                    <div class="nav-item nav-item-has-children" id="agents-menu-toggle">
+                        <div class="nav-item-icon-text">
+                            <ion-icon name="briefcase-outline"></ion-icon>
+                            <span>Agents</span>
+                        </div>
+                        <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+                    </div>
+                    <ul class="sub-menu" id="agents-submenu">
+                        <li><a href="agent_accounts.html" class="sub-item">Manage Accounts</a></li>
+                        <li><a href="agent_ranks.html" class="sub-item">Ranks & Qualifications</a></li>
+                        <li><a href="agent_teams.html" class="sub-item">Manage Teams</a></li>
+                        <li><a href="agent_applications.html" class="sub-item">Applications</a></li>
+                        <li><a href="agent_app_forms.html" class="sub-item">App Forms</a></li>
+                        <li><a href="agent_commissions.html" class="sub-item">Commissions</a></li>
+                        <li><a href="agent_encashments.html" class="sub-item">Encashments</a></li>
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="#" class="nav-item" id="logout-btn">
+                    <ion-icon name="log-out-outline"></ion-icon>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <button class="menu-btn" id="open-sidebar">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </button>
+                <div class="header-search">
+                    <ion-icon name="search-outline"></ion-icon>
+                    <input type="text" placeholder="Search...">
+                </div>
+                <div class="header-profile">
+                    <div class="avatar"><img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Profile"></div>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <div class="welcome-banner" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
+                    <div>
+                        <h1>Edit Subscription Plan</h1>
+                        <p>Configure product fees, commissions, and insurance benefits for your subscribers.</p>
+                    </div>
+                    <a href="subscription_plans.html" class="close-btn" style="color: var(--text-dim); font-size: 24px;"><ion-icon name="close-outline"></ion-icon></a>
+                </div>
+
+                <div class="wizard-glass">
+                    <div class="wizard-tabs">
+                        <div class="tab-item active" onclick="jumpToStep(1)" id="tab-1"><ion-icon name="information-circle-outline"></ion-icon> Basic Info</div>
+                        <div class="tab-item" onclick="jumpToStep(2)" id="tab-2"><ion-icon name="pricetag-outline"></ion-icon> SKU & Fees</div>
+                        <div class="tab-item" onclick="jumpToStep(3)" id="tab-3"><ion-icon name="cash-outline"></ion-icon> One-time Comm.</div>
+                        <div class="tab-item" onclick="jumpToStep(4)" id="tab-4"><ion-icon name="stats-chart-outline"></ion-icon> <span id="tab-4-text">Monthly Alloc.</span></div>
+                        <div class="tab-item" onclick="jumpToStep(5)" id="tab-5"><ion-icon name="shield-outline"></ion-icon> Insurance</div>
+                        <div class="tab-item" onclick="jumpToStep(6)" id="tab-6"><ion-icon name="document-text-outline"></ion-icon> Claim Requirements</div>
+                        <div class="tab-item" onclick="jumpToStep(7)" id="tab-7"><ion-icon name="calendar-outline"></ion-icon> Billing Brackets</div>
+                    </div>
+                    </div>
+
+                    <form id="createPlanForm" novalidate>
+                        <!-- Step 1: Basic Info -->
+                        <div class="wizard-step active" id="step1">
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label>Plan Name *</label>
+                                    <input type="text" id="planName" placeholder="e.g. Diamond Protection Plus">
+                                </div>
+                                <div class="form-group full-width" style="margin-top: 10px; margin-bottom: 10px;">
+                                    <label>Subscription Type</label>
+                                    <div class="radio-group">
+                                        <label class="radio-item"><input type="radio" name="has_insurance" value="1" checked> With Insurance</label>
+                                        <label class="radio-item"><input type="radio" name="has_insurance" value="0"> Subscription Only (No Insurance)</label>
+                                    </div>
+                                </div>
+                                <div class="form-group ins-field">
+                                    <label>Insurance Coverage</label>
+                                    <select id="coverage">
+                                        <option value="Individual">Individual (1 person)</option>
+                                        <option value="2 persons">2 persons</option>
+                                        <option value="3 individuals">3 individuals</option>
+                                        <option value="Family">Family</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Payment Terms</label>
+                                    <select id="terms">
+                                        <option value="Every Month">Every Month</option>
+                                        <option value="Every Quarter">Every Quarter</option>
+                                        <option value="Every Semi-Annual">Every Semi-Annual</option>
+                                        <option value="Annually">Annually</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Subscription Term (months)</label>
+                                    <input type="number" id="subTerm" placeholder="e.g. 12">
+                                </div>
+                                <div class="form-group ins-field">
+                                    <label>Insurance Term (months)</label>
+                                    <input type="number" id="insTerm" placeholder="e.g. 12">
+                                </div>
+                                <div class="form-group ins-field">
+                                <label for="contPeriod">Contestability Period (Days)</label>
+                                <input type="number" id="contPeriod" name="contPeriod" class="form-control glass-input" value="0" min="0">
+                            </div>
+                                <div class="form-group full-width">
+                                    <div class="quota-box">
+                                        <ion-icon name="lock-closed" class="icon"></ion-icon>
+                                        <div style="flex:1;">
+                                            <div style="font-size:14px; font-weight:700; color:var(--warning-yellow); margin-bottom:4px;">Quota Weight (Q)</div>
+                                            <div style="font-size:11px; color:var(--text-dim);">How much this plan counts toward monthly goals (e.g., 1 = 1Q, 2 = 2Q).</div>
+                                        </div>
+                                        <input type="number" step="0.1" id="quotaWeight" value="1.0">
+                                    </div>
+                                </div>
+                                <div class="form-group full-width ins-field">
+                                    <label>Beneficiary Setting</label>
+                                    <div class="radio-group" style="margin-bottom: 20px;">
+                                        <label class="radio-item"><input type="radio" name="requires_beneficiaries" value="1" checked> With Beneficiary/ies</label>
+                                        <label class="radio-item"><input type="radio" name="requires_beneficiaries" value="0"> Without Beneficiaries</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group full-width" style="border-top: 1px solid var(--border-color); padding-top: 20px;">
+                                    <div style="display: flex; gap: 30px; align-items: flex-start;">
+                                        <div style="flex: 1;">
+                                            <label style="font-weight: 700; color: white; margin-bottom: 20px; display: block;">Card Theme Customization</label>
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                                <div class="form-group">
+                                                    <label>Background Color</label>
+                                                    <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.05); padding:8px; border-radius:8px;">
+                                                        <input type="color" id="themeBg" value="#6366f1" style="width: 30px; height: 30px; border:none; padding:0; background:none;">
+                                                        <input type="text" id="themeBgHex" value="#6366F1" readonly style="background:none; border:none; color:var(--text-dim); font-size:12px; font-family:monospace; width:60px;">
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Text Color</label>
+                                                    <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.05); padding:8px; border-radius:8px;">
+                                                        <input type="color" id="themeTxt" value="#ffffff" style="width: 30px; height: 30px; border:none; padding:0; background:none;">
+                                                        <input type="text" id="themeTxtHex" value="#FFFFFF" readonly style="background:none; border:none; color:var(--text-dim); font-size:12px; font-family:monospace; width:60px;">
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Background Pattern</label>
+                                                    <select id="themePattern">
+                                                        <option value="waves">Waves</option>
+                                                        <option value="dots">Dots</option>
+                                                        <option value="geometric">Geometric</option>
+                                                        <option value="none">None</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Pattern Opacity: <span id="opaVal">15%</span></label>
+                                                    <input type="range" id="themeOpacity" value="15" min="0" max="100">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Real-time Preview Card -->
+                                        <div style="width: 320px; flex-shrink: 0; position: sticky; top: 0;">
+                                            <label style="font-weight: 700; color: white; margin-bottom: 20px; display: block;">Live Preview</label>
+                                            <div id="cardPreview" style="width: 100%; height: 180px; border-radius: 16px; position: relative; overflow: hidden; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: all 0.3s ease;">
+                                                <div id="cardPattern" style="position: absolute; inset: 0; pointer-events: none; transition: all 0.3s ease;"></div>
+                                                <div style="position: relative; z-index: 1;">
+                                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                                        <ion-icon name="shield-checkmark" style="font-size: 24px;"></ion-icon>
+                                                        <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700;">ACTIVE</span>
+                                                    </div>
+                                                    <h3 id="prevPlanName" style="margin-top: 15px; font-size: 18px; font-weight: 700;">Emerald Pro Max</h3>
+                                                </div>
+                                                <div style="position: relative; z-index: 1; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; display: flex; justify-content: space-between; font-size: 11px;">
+                                                    <div>Plan Term: 12 Mo</div>
+                                                    <div>Quota: 1.00x</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: SKU & Fees -->
+                        <div class="wizard-step" id="step2">
+                            <div style="padding: 24px;">
+                                <div class="sku-section">
+                                    <h4 class="one-time-title"><ion-icon name="reorder-four-outline"></ion-icon> ONE-TIME PAYMENT</h4>
+                                    <div class="form-grid" style="padding:0; margin-top:16px;">
+                                        <div class="form-group full-width">
+                                            <label>SKU *</label>
+                                            <div style="display:flex; gap:10px;">
+                                                <input type="text" id="skuOnboarding" style="flex:1;" placeholder="Enter SKU">
+                                                <button type="button" class="lookup-btn" onclick="verifySKU('skuOnboarding', 'onboardingFeedback')"><ion-icon name="search-outline"></ion-icon> Lookup</button>
+                                            </div>
+                                            <div id="onboardingFeedback" class="sku-feedback"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Product Name</label>
+                                            <input type="text" id="onboardingName" placeholder="Auto-filled" readonly>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>One-Time Fee (₱)</label>
+                                            <input type="text" id="onboardingPrice" placeholder="0.00" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="sku-section" id="monthly-sku-section">
+                                    <h4 class="monthly-title"><ion-icon name="refresh-outline"></ion-icon> MONTHLY SUBSCRIPTION</h4>
+                                    <div class="form-grid" style="padding:0; margin-top:16px;">
+                                        <div class="form-group full-width">
+                                            <label>Monthly SKU *</label>
+                                            <div style="display:flex; gap:10px;">
+                                                <input type="text" id="skuMonthly" style="flex:1;" placeholder="Enter SKU">
+                                                <button type="button" class="lookup-btn" onclick="verifySKU('skuMonthly', 'monthlyFeedback')"><ion-icon name="search-outline"></ion-icon> Lookup</button>
+                                            </div>
+                                            <div id="monthlyFeedback" class="sku-feedback"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Product Name</label>
+                                            <input type="text" id="monthlyName" placeholder="Auto-filled" readonly>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Monthly Fee (₱)</label>
+                                            <input type="text" id="monthlyPrice" placeholder="0.00" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="sku-section" id="post-term-section">
+                                    <h4 class="post-term-title"><ion-icon name="hourglass-outline"></ion-icon> POST-TERM (INSURANCE ONLY)</h4>
+                                    <p style="font-size:12px; color:var(--text-dim); margin-bottom:12px;">Fee to pay after the Subscriber Term ends.</p>
+                                    <div class="form-grid" style="padding:0;">
+                                        <div class="form-group full-width">
+                                            <label>Post-Term SKU</label>
+                                            <div style="display:flex; gap:10px;">
+                                                <input type="text" id="skuPostTerm" style="flex:1;" placeholder="Enter SKU">
+                                                <button type="button" class="lookup-btn" onclick="verifySKU('skuPostTerm', 'postTermFeedback')"><ion-icon name="search-outline"></ion-icon> Lookup</button>
+                                            </div>
+                                            <div id="postTermFeedback" class="sku-feedback"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Product Name</label>
+                                            <input type="text" id="postTermName" placeholder="Auto-filled" readonly>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Post-Term Fee (₱)</label>
+                                            <input type="text" id="postTermPrice" placeholder="0.00" readonly>
+                                        </div>
+                                        <div class="form-group full-width">
+                                            <label>Payment Cycle</label>
+                                            <select id="postTermCycle">
+                                                <option value="Annually">Annually</option>
+                                                <option value="Every Month">Every Month</option>
+                                                <option value="Every Semi-Annual">Every Semi-Annual</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: One-time Comm. -->
+                        <div class="wizard-step" id="step3">
+                            <div style="padding: 24px;">
+                                <p style="font-size:13px; color:var(--text-dim); margin-bottom:24px;">Commission values distributed from the one-time enrollment fee.</p>
+                                <div class="form-grid" style="padding:0; gap:16px;">
+                                    <div class="form-group full-width" style="display:grid; grid-template-columns: 1fr 2fr; align-items:center;">
+                                        <label>1st Level Commission</label>
+                                        <div class="currency-input"><input type="number" id="otcL1" value="0"></div>
+                                    </div>
+                                    <div id="otc-levels-2-5" style="display:contents;">
+                                    <div class="form-group full-width" style="display:grid; grid-template-columns: 1fr 2fr; align-items:center;">
+                                        <label>2nd Level Commission</label>
+                                        <div class="currency-input"><input type="number" id="otcL2" value="0"></div>
+                                    </div>
+                                    <div class="form-group full-width" style="display:grid; grid-template-columns: 1fr 2fr; align-items:center;">
+                                        <label>3rd Level Commission</label>
+                                        <div class="currency-input"><input type="number" id="otcL3" value="0"></div>
+                                    </div>
+                                    <div class="form-group full-width" style="display:grid; grid-template-columns: 1fr 2fr; align-items:center;">
+                                        <label>4th Level Commission</label>
+                                        <div class="currency-input"><input type="number" id="otcL4" value="0"></div>
+                                    </div>
+                                    <div class="form-group full-width" style="display:grid; grid-template-columns: 1fr 2fr; align-items:center;">
+                                        <label>5th Level Commission</label>
+                                        <div class="currency-input"><input type="number" id="otcL5" value="0"></div>
+                                    </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Monthly Alloc. -->
+                        <div class="wizard-step" id="step4">
+                            <div style="padding: 24px;">
+                                <p style="font-size:13px; color:var(--text-dim); margin-bottom:24px;">Value distribution from the monthly subscription fee.</p>
+                                <div class="form-grid" style="padding:0; gap:16px;">
+                                    <div class="form-group full-width" style="display:grid; grid-template-columns: 1fr 2fr; align-items:center;">
+                                        <label>P-Voucher Amount / month</label>
+                                        <div class="currency-input"><input type="number" id="monthlyPv" value="0"></div>
+                                    </div>
+                                    <div class="form-group full-width" style="display:grid; grid-template-columns: 1fr 2fr; align-items:center;">
+                                        <label>Merchant Handling Fee</label>
+                                        <div class="currency-input"><input type="number" id="monthlyMerchant" value="0"></div>
+                                    </div>
+                                    <div class="form-group full-width" style="display:grid; grid-template-columns: 1fr 2fr; align-items:center;">
+                                        <label>Point Rewards</label>
+                                        <div class="currency-input"><input type="number" id="monthlyPoints" value="0"></div>
+                                    </div>
+                                    <div class="form-group full-width" id="monthly-collection-fee-group" style="display:grid; grid-template-columns: 1fr 2fr; align-items:center;">
+                                        <label>Collection Fee (Agent/Collector)</label>
+                                        <div class="currency-input"><input type="number" id="monthlyCollection" value="0"></div>
+                                    </div>
+                                </div>
+
+                                <div style="margin-top:30px; margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+                                    <ion-icon name="ribbon-outline" style="color:#f59e0b;"></ion-icon>
+                                    <h5 style="font-size:14px; font-weight:700; color:white; margin:0;">Position-Based Residuals</h5>
+                                </div>
+                                <p style="font-size:11px; color:var(--text-dim); margin-bottom:15px;">Select a rank/position and set the residual amount for subscribers under that rank's downline.</p>
+                                <div id="residualsList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:15px;"></div>
+                                <button type="button" class="btn-add-item" style="padding:12px;" onclick="addResidualRow()">
+                                    <ion-icon name="add-outline"></ion-icon> Add Rank Residual
+                                </button>
+
+                                <div style="margin-top:30px; margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+                                    <ion-icon name="layers-outline" style="color:#0ea5e9;"></ion-icon>
+                                    <h5 style="font-size:14px; font-weight:700; color:white; margin:0;">Level-Based Residuals</h5>
+                                </div>
+                                <p style="font-size:11px; color:var(--text-dim); margin-bottom:15px;">Distributed up the referral chain from the subscriber.</p>
+                                <div class="form-grid" style="padding:0; gap:12px;">
+                                    <div class="form-group full-width" style="display:grid; grid-template-columns: 1fr 2fr; align-items:center;">
+                                        <label>1st Level Residual (Direct Agent)</label>
+                                        <div class="currency-input"><input type="number" id="resL1" value="0"></div>
+                                    </div>
+                                    <div class="form-group full-width" style="display:grid; grid-template-columns: 1fr 2fr; align-items:center;">
+                                        <label>2nd Level Residual</label>
+                                        <div class="currency-input"><input type="number" id="resL2" value="0"></div>
+                                    </div>
+                                    <div class="form-group full-width" style="display:grid; grid-template-columns: 1fr 2fr; align-items:center;">
+                                        <label>3rd Level Residual</label>
+                                        <div class="currency-input"><input type="number" id="resL3" value="0"></div>
+                                    </div>
+                                    <div class="form-group full-width" style="display:grid; grid-template-columns: 1fr 2fr; align-items:center;">
+                                        <label>4th Level Residual</label>
+                                        <div class="currency-input"><input type="number" id="resL4" value="0"></div>
+                                    </div>
+                                    <div class="form-group full-width" style="display:grid; grid-template-columns: 1fr 2fr; align-items:center;">
+                                        <label>Climbs Insurance Premium</label>
+                                        <div class="currency-input"><input type="number" id="climbsPremium" value="0"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 5: Insurance -->
+                        <div class="wizard-step" id="step5">
+                            <div style="padding: 24px;">
+                                <p style="font-size:13px; color:var(--text-dim); margin-bottom:24px;">Insurance benefit amounts and contestability settings.</p>
+                                <div class="benefit-card">
+                                    <label style="font-size:13px; font-weight:700; display:block; margin-bottom:12px;">Accidental Benefit</label>
+                                    <div style="display:flex; align-items:center; gap:20px;">
+                                        <div class="currency-input" style="flex:1;"><input type="number" id="amt_acc_death" class="ben-amount" value="0"></div>
+                                        <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
+                                            <input type="checkbox" id="cont_acc_death" style="width:18px; height:18px; accent-color:var(--accent-blue);"> Requires Contestability Period
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="benefit-card">
+                                    <label style="font-size:13px; font-weight:700; display:block; margin-bottom:12px;">Life Benefit</label>
+                                    <div style="display:flex; align-items:center; gap:20px;">
+                                        <div class="currency-input" style="flex:1;"><input type="number" id="amt_life" class="ben-amount" value="0"></div>
+                                        <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
+                                            <input type="checkbox" id="cont_life" style="width:18px; height:18px; accent-color:var(--accent-blue);"> Requires Contestability Period
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="benefit-card">
+                                    <label style="font-size:13px; font-weight:700; display:block; margin-bottom:12px;">Burial Expense</label>
+                                    <div class="currency-input" style="width:50%;"><input type="number" id="amt_burial" class="ben-amount" value="0"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 6: Claim Requirements -->
+                        <div class="wizard-step" id="step6">
+                            <div style="padding: 24px;">
+                                <div style="margin-bottom:30px;">
+                                    <h5 style="font-size:14px; font-weight:700; color:white; margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+                                        <ion-icon name="document-attach-outline"></ion-icon> Dynamic Claim Requirements
+                                    </h5>
+                                    <div id="requirementsList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:15px;"></div>
+                                    <button type="button" class="btn-add-item" onclick="addRequirementRow()">
+                                        <ion-icon name="add-outline"></ion-icon> Add Required Document
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 7: Billing Brackets -->
+                        <div class="wizard-step" id="step7">
+                            <div style="padding: 24px;">
+                                <p style="font-size:14px; color:var(--text-dim); margin-bottom:15px; line-height:1.6;">
+                                    Define 2–4 date brackets. When a subscriber is approved, their monthly billing day is automatically assigned based on which bracket their approval date falls into.
+                                </p>
+                                
+                                <div class="info-box">
+                                    <p><span class="example-badge">Example:</span> Approved on the 10th &rarr; falls in bracket 1&ndash;14 &rarr; billed on the 14th of every month.</p>
+                                </div>
+                                
+                                <div id="bracketsList">
+                                    <!-- Bracket Cards will be injected here -->
+                                </div>
+                                
+                                <div class="add-bracket-row">
+                                    <button type="button" class="btn-add-item" id="addBracketBtn" onclick="addBracketRow()" style="margin:0;">
+                                        <ion-icon name="add-outline"></ion-icon> Add Bracket
+                                    </button>
+                                    <span class="bracket-counter" id="bracketCounter">0 of 4 brackets</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="wizard-footer">
+                            <button type="button" class="btn-wizard btn-prev" id="prevBtn" onclick="changeStep(-1)" disabled>
+                                <ion-icon name="arrow-back-outline"></ion-icon> Previous
+                            </button>
+                            <button type="button" class="btn-wizard btn-next" id="nextBtn" onclick="changeStep(1)">
+                                Next <ion-icon name="arrow-forward-outline"></ion-icon>
+                            </button>
+                            <button type="submit" class="btn-wizard btn-submit" id="submitBtn" style="display:none;">
+                                Save Subscription Plan <ion-icon name="rocket-outline"></ion-icon>
+                            </button>
+                            <button type="button" class="btn-wizard btn-cancel" onclick="window.location.href='subscription_plans.html'">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/dashboard.js"></script>
+    <script src="js/subscription_plans.js"></script>
+</body>
+</html>

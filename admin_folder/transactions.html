@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Management - Transaction Ledger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/accounts.css">
+    <link rel="stylesheet" href="css/products.css">
+    <link rel="stylesheet" href="css/transactions.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <!-- QR Code Generator -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar Navigation (Modular) -->
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-header">
+                <button class="menu-btn" id="open-sidebar">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </button>
+                <div class="header-search">
+                    <ion-icon name="search-outline"></ion-icon>
+                    <input type="text" id="transaction-search" placeholder="Search SI# or Customer Name...">
+                </div>
+                <div class="header-profile">
+                    <div class="notification-bell">
+                        <ion-icon name="notifications-outline"></ion-icon>
+                        <span class="badge">0</span>
+                    </div>
+                    <div class="avatar">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Admin">
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <div class="welcome-banner">
+                        <h1>Transaction Ledger</h1>
+                        <p>History of all sales recorded in the POS terminal.</p>
+                    </div>
+                    <div class="filter-controls" style="display: flex; gap: 12px; align-items: center;">
+                        <input type="date" id="date-from" placeholder="From Date" class="date-input">
+                        <span style="color: var(--text-muted);">to</span>
+                        <input type="date" id="date-to" placeholder="To Date" class="date-input">
+                        <select id="status-filter" style="background: var(--glass-bg); border: 1px solid var(--glass-border); color: white; border-radius: 8px; padding: 8px 12px;">
+                            <option value="">All Statuses</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Voided">Voided</option>
+                        </select>
+                        <button class="btn-refresh" id="btn-refresh" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--glass-border); padding: 10px; border-radius: 8px; cursor: pointer;">
+                            <ion-icon name="refresh-outline" style="font-size: 18px;"></ion-icon>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container fade-in">
+                    <table class="data-table" id="transactions-table">
+                        <thead>
+                            <tr>
+                                <th>SI #</th>
+                                <th>Date & Time</th>
+                                <th>Customer</th>
+                                <th>Grand Total</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-tbody">
+                            <!-- Data loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Transaction Detail Modal -->
+    <div class="modal-overlay" id="detail-modal">
+        <div class="modal-content detail-modal-content">
+            <div class="modal-header">
+                <h2 id="receipt-title">OR-000001</h2>
+                <button class="close-modal" id="close-modal">&times;</button>
+            </div>
+            <div class="receipt-preview-wrap">
+                <div class="receipt-view" id="receipt-view">
+                    <!-- Items will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer" style="padding-top: 24px;">
+                <button class="btn-secondary" id="btn-close-detail" style="flex: 1;">Close</button>
+                <button class="btn-action reject" id="btn-void-transaction" style="flex: 1; display: none;">
+                    <ion-icon name="trash-outline"></ion-icon> Void Transaction
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/sidebar-module.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/transactions.js"></script>
+</body>
+</html>

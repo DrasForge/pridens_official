@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscribers - Accounts</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/accounts.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar Navigation (Modular) -->
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-header">
+                <button class="menu-btn" id="open-sidebar">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </button>
+                <div class="header-search">
+                    <ion-icon name="search-outline"></ion-icon>
+                    <input type="text" placeholder="Search anything...">
+                </div>
+                <div class="header-profile">
+                    <div class="notification-bell">
+                        <ion-icon name="notifications-outline"></ion-icon>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="avatar">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Admin">
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-content accounts-content">
+                <div class="welcome-banner" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h1>Subscriber Accounts</h1>
+                        <p>Manage subscriber accounts, insurance, and statuses.</p>
+                    </div>
+                    <button class="btn-action btn-primary" id="btn-register-member" onclick="window.location.href='register_member.html'">
+                        <ion-icon name="person-add-outline"></ion-icon> Register Member
+                    </button>
+                </div>
+
+                <!-- Tabs -->
+                <div class="tabs-container">
+                    <button class="tab active" data-status="All">All</button>
+                    <button class="tab" data-status="Pending">Pending</button>
+                    <button class="tab" data-status="Active">Active</button>
+                    <button class="tab" data-status="Rejected">Rejected</button>
+                </div>
+
+                <!-- Table Container -->
+                <div class="table-container fade-in">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>SUBSCRIBER</th>
+                                <th>ACCOUNT ID</th>
+                                <th>STATUS</th>
+                                <th>INSURANCE</th>
+                                <th>JOINED</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accounts-table-body">
+                            <!-- Rows injected via JS -->
+                            <tr class="loading-row">
+                                <td colspan="6" style="text-align: center; padding: 40px;">
+                                    <div class="loader" style="margin: 0 auto; border-top-color: var(--primary-color);"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="js/sidebar-module.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/accounts.js"></script>
+</body>
+</html>

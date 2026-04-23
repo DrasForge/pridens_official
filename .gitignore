@@ -1,0 +1,17 @@
+# Standard PHP / Web .gitignore
+
+# Dependencies
+vendor/
+node_modules/
+
+# Database / Sensitive Config
+# admin_API/db.php (Commented out if you want to include local dev credentials, but recommended to use sample)
+
+# Assets / Uploads
+admin_API/uploads/*
+!admin_API/uploads/.gitkeep
+
+# OS Files
+.DS_Store
+Thumbs.db
+*.log

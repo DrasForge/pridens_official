@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Marketplace - Shop Settings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 30px; }
+        .channel-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; padding: 24px; transition: all 0.2s; position: relative; }
+        .channel-card:hover { transform: translateY(-5px); border-color: rgba(99, 102, 241, 0.3); background: rgba(255,255,255,0.04); }
+        .channel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .channel-title { font-size: 1.1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
+        
+        .qr-placeholder { width: 100%; aspect-ratio: 1; background: rgba(0,0,0,0.2); border: 2px dashed rgba(255,255,255,0.1); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; margin-bottom: 16px; }
+        .qr-placeholder img { width: 100%; height: 100%; object-fit: contain; }
+        
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; font-weight: 700; }
+        .form-group select, .form-group input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; color: #fff; font-size: 0.9rem; }
+        
+        .btn-save-channel { width: 100%; background: #6366f1; color: #fff; padding: 12px; border-radius: 10px; font-weight: 700; border: none; cursor: pointer; margin-top: 10px; transition: all 0.2s; }
+        .btn-save-channel:hover { background: #4f46e5; }
+        
+        .toggle-switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: #fff; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #6366f1; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation">
+        <div class="orb orb-1"></div>
+    </div>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>Shop Settings</h1>
+                    <p style="color:var(--text-dim); font-size:0.85rem;">Configure your payout and direct payment channels</p>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <div class="welcome-banner" style="padding:24px; background:linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1)); border-radius:16px; margin-bottom:32px; border:1px solid rgba(255,255,255,0.05);">
+                    <h2 style="font-size:1.25rem; color:#fff; display:flex; align-items:center; gap:10px;">
+                        <ion-icon name="wallet-outline" style="color:#6366f1;"></ion-icon>
+                        Payment Channels
+                    </h2>
+                    <p style="color:var(--text-dim); margin-top:8px; font-size:0.9rem; line-height:1.5;">
+                        Configure your Bank and E-Wallet channels below. These will be used for **Direct Payment** methods on your products. **HD QR Codes are required** for customers to verify transfers.
+                    </p>
+                </div>
+
+                <div style="margin-top:40px;">
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+                        <ion-icon name="business-outline" style="color:#6366f1; font-size:1.5rem;"></ion-icon>
+                        <h3 style="font-size:1.1rem; color:#fff;">Bank Channels (Up to 4)</h3>
+                    </div>
+                    <div class="settings-grid" id="bank-channels-grid">
+                        <!-- 4 Bank Cards will be generated here -->
+                    </div>
+                </div>
+
+                <div style="margin-top:60px; margin-bottom:60px;">
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+                        <ion-icon name="phone-portrait-outline" style="color:#818cf8; font-size:1.5rem;"></ion-icon>
+                        <h3 style="font-size:1.1rem; color:#fff;">E-Wallet Channels (Up to 4)</h3>
+                    </div>
+                    <div class="settings-grid" id="ewallet-channels-grid">
+                        <!-- E-wallet Card -->
+                    </div>
+                <div style="margin-top:60px; margin-bottom:100px;">
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+                        <ion-icon name="analytics-outline" style="color:#4ade80; font-size:1.5rem;"></ion-icon>
+                        <h3 style="font-size:1.1rem; color:#fff;">Direct Payment History</h3>
+                    </div>
+                    <div class="channel-card" style="padding:0; overflow:hidden;">
+                        <table style="width:100%; border-collapse:collapse; color:#fff; font-size:0.85rem; text-align:left;">
+                            <thead>
+                                <tr style="background:rgba(255,255,255,0.02); border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <th style="padding:15px 20px;">Order SN</th>
+                                    <th style="padding:15px 20px;">Buyer</th>
+                                    <th style="padding:15px 20px;">Channel</th>
+                                    <th style="padding:15px 20px;">Amount</th>
+                                    <th style="padding:15px 20px;">Status</th>
+                                    <th style="padding:15px 20px;">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payment-history-tbody">
+                                <tr>
+                                    <td colspan="6" style="padding:40px; text-align:center; color:var(--text-dim);">No transactions found.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/marketplace-sidebar.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const merchantId = urlParams.get('id') || urlParams.get('merchant_id');
+
+        const PH_BANKS = ["BDO Unibank", "BPI", "Metrobank", "Landbank", "Security Bank", "PNB", "UnionBank", "Chinabank", "EastWest", "RCBC", "Philtrust Bank", "Sterling Bank", "GoTyme", "SeaBank", "Maya Bank", "Tonik"];
+        const PH_EWALLETS = ["GCash", "Maya", "GoTyme", "GrabPay", "Coins.ph", "ShopeePay"];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadChannels();
+        });
+
+        async function loadChannels() {
+            try {
+                const res = await fetch(`../admin_API/get_merchant_payment_channels.php?merchant_id=${merchantId}`);
+                const json = await res.json();
+                
+                if (json.status === 'success') {
+                    renderChannels(json.data);
+                    loadPaymentHistory();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderChannels(data) {
+            const bankGrid = document.getElementById('bank-channels-grid');
+            const ewalletGrid = document.getElementById('ewallet-channels-grid');
+            
+            bankGrid.innerHTML = '';
+            ewalletGrid.innerHTML = '';
+
+            const banks = data.filter(c => c.type === 'Bank');
+            const ewallets = data.filter(c => c.type === 'E-Wallet');
+
+            // Render 4 Bank Slots
+            for (let i = 0; i < 4; i++) {
+                const channel = banks[i] || null;
+                bankGrid.appendChild(createChannelCard('Bank', channel, i + 1));
+            }
+
+            // Render 4 E-wallet Slots
+            for (let i = 0; i < 4; i++) {
+                const channel = ewallets[i] || null;
+                ewalletGrid.appendChild(createChannelCard('E-Wallet', channel, i + 1));
+            }
+        }
+
+        function createChannelCard(type, data, slotIndex) {
+            const card = document.createElement('div');
+            card.className = 'channel-card fade-in';
+            const id = data ? data.id : 0;
+            const qrImg = data && data.qr_code_path ? `../admin_API/${data.qr_code_path}` : '';
+            const providers = type === 'Bank' ? PH_BANKS : PH_EWALLETS;
+
+            card.innerHTML = `
+                <div class="channel-header">
+                    <div class="channel-title">
+                        <ion-icon name="${type === 'Bank' ? 'business' : 'wallet'}-outline"></ion-icon>
+                        ${type} Slot #${slotIndex}
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-${type}-${slotIndex}" ${data && parseInt(data.is_enabled) === 1 ? 'checked' : ''}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="qr-placeholder" onclick="document.getElementById('qr-file-${type}-${slotIndex}').click()">
+                    ${qrImg ? `<img src="${qrImg}" id="preview-${type}-${slotIndex}">` : `
+                        <ion-icon name="qr-code-outline" style="font-size:40px; color:rgba(255,255,255,0.1);"></ion-icon>
+                        <p style="color:var(--text-dim); font-size:0.75rem; margin-top:10px;">Click to upload HD QR Code</p>
+                    `}
+                    <img src="" id="new-preview-${type}-${slotIndex}" style="display:none;">
+                </div>
+                <input type="file" id="qr-file-${type}-${slotIndex}" style="display:none;" accept="image/*" onchange="previewQR(this, '${type}', ${slotIndex})">
+
+                <div class="form-group">
+                    <label>${type} Provider</label>
+                    <select id="provider-${type}-${slotIndex}">
+                        <option value="">Select Provider</option>
+                        ${providers.map(p => `<option value="${p}" ${data && data.provider_name === p ? 'selected' : ''}>${p}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Account Name</label>
+                    <input type="text" id="name-${type}-${slotIndex}" value="${data ? data.account_name : ''}" placeholder="e.g. Juan Dela Cruz">
+                </div>
+
+                <div class="form-group">
+                    <label>Account Number</label>
+                    <input type="text" id="number-${type}-${slotIndex}" value="${data ? data.account_number : ''}" placeholder="e.g. 00123456789">
+                </div>
+
+                <button class="btn-save-channel" id="btn-save-${type}-${slotIndex}" onclick="saveChannel('${type}', ${slotIndex}, ${id})">
+                    Save Channel
+                </button>
+            `;
+            return card;
+        }
+
+        function previewQR(input, type, index) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const placeholder = input.previousElementSibling;
+                    placeholder.innerHTML = `<img src="${e.target.result}">`;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function saveChannel(type, index, channelId) {
+            const provider = document.getElementById(`provider-${type}-${index}`).value;
+            const name = document.getElementById(`name-${type}-${index}`).value;
+            const number = document.getElementById(`number-${type}-${index}`).value;
+            const isEnabled = document.getElementById(`toggle-${type}-${index}`).checked ? 1 : 0;
+            const fileInput = document.getElementById(`qr-file-${type}-${index}`);
+            const btn = document.getElementById(`btn-save-${type}-${index}`);
+
+            if (!provider || !name || !number) {
+                alert('Please fill in all provider details');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('merchant_id', merchantId);
+            formData.append('type', type);
+            formData.append('provider_name', provider);
+            formData.append('account_name', name);
+            formData.append('account_number', number);
+            formData.append('is_enabled', isEnabled);
+            formData.append('channel_id', channelId);
+            
+            if (fileInput.files[0]) {
+                formData.append('qr_code', fileInput.files[0]);
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<ion-icon name="sync" style="animation:spin 1s linear infinite;"></ion-icon> Saving...';
+
+            try {
+                const res = await fetch(`../admin_API/save_merchant_payment_channels.php`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const json = await res.json();
+                
+                if (json.status === 'success') {
+                    alert('Payment channel saved successfully!');
+                    loadChannels();
+                } else {
+                    alert(json.message);
+                }
+            } catch (e) {
+                alert('Connection error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Channel';
+            }
+        }
+        async function loadPaymentHistory() {
+            const tbody = document.getElementById('payment-history-tbody');
+            try {
+                // We reuse get_merchant_orders but specifically for direct payments if we had a filter, 
+                // for now we just fetch all to show history
+                const res = await fetch(`../admin_API/get_merchant_orders.php?merchant_id=${merchantId}`);
+                const json = await res.json();
+                
+                if (json.status === 'success' && json.data.length > 0) {
+                    const directOrders = json.data.filter(o => o.payment_method !== 'COD' && o.payment_method !== 'Voucher');
+                    if (directOrders.length === 0) return;
+                    
+                    tbody.innerHTML = directOrders.map(o => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                            <td style="padding:15px 20px; font-family:monospace;">${o.order_sn}</td>
+                            <td style="padding:15px 20px;">${o.first_name} ${o.last_name}</td>
+                            <td style="padding:15px 20px;">
+                                <div style="font-weight:600;">${o.channel_provider || 'Direct'}</div>
+                                <div style="font-size:0.7rem; color:var(--text-dim);">${o.channel_account_name || ''}</div>
+                            </td>
+                            <td style="padding:15px 20px; font-weight:700; color:#4ade80;">₱${parseFloat(o.total_amount).toLocaleString()}</td>
+                            <td style="padding:15px 20px;">
+                                <span class="status-badge" style="padding:4px 8px; border-radius:4px; font-size:0.65rem; background:rgba(255,255,255,0.05);">
+                                    ${o.status}
+                                </span>
+                            </td>
+                            <td style="padding:15px 20px; color:var(--text-dim); font-size:0.75rem;">${new Date(o.created_at).toLocaleDateString()}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    </script>
+</body>
+</html>

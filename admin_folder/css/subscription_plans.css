@@ -1,0 +1,245 @@
+/* admin_folder/css/subscription_plans.css */
+
+:root {
+    --primary-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+    --glass-bg: rgba(30, 41, 59, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --accent-blue: #38bdf8;
+    --success-emerald: #10b981;
+}
+
+/* Plan Cards - Stat Card Pattern */
+.plans-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 24px;
+    margin-top: 30px;
+}
+
+.plan-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 28px;
+    backdrop-filter: blur(12px);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.plan-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.plan-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
+    pointer-events: none;
+}
+
+.plan-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.plan-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-emerald);
+}
+
+.plan-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    margin-top: 4px;
+}
+
+.plan-info-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.plan-info-row span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.plan-stats-grid {
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 16px;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.stat-item span:first-child {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.stat-item span:last-child {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent-blue);
+}
+
+.plan-actions {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+}
+
+.btn-action {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    font-size: 18px;
+}
+
+.btn-action:hover {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* Wizard Specific Styles */
+.wizard-glass {
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.wizard-progress {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding: 0 40px;
+    position: relative;
+}
+
+.wizard-progress::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 80px;
+    right: 80px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 1;
+}
+
+.step {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.step-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #1e293b;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: rgba(255,255,255,0.4);
+    transition: all 0.4s ease;
+}
+
+.step.active .step-icon {
+    background: var(--primary-gradient);
+    border-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+}
+
+.step.completed .step-icon {
+    background: var(--success-emerald);
+    border-color: var(--success-emerald);
+    color: white;
+}
+
+.step-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.step.active .step-label { color: white; }
+
+/* Dynamic List Items */
+.dynamic-row {
+    background: rgba(15, 23, 42, 0.3);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    display: grid;
+    align-items: center;
+    gap: 16px;
+    animation: fadeIn 0.3s ease;
+}
+
+.btn-remove {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    border: none;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-remove:hover { background: rgba(239, 68, 68, 0.2); }
+
+.sku-feedback {
+    margin-top: 8px;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.sku-feedback.valid { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.sku-feedback.invalid { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

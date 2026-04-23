@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Commissions - Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        /* ── FILTER BAR ── */
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-end;
+            margin-bottom: 24px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px 20px;
+        }
+        .filter-group { display:flex; flex-direction:column; gap:6px; flex:1; min-width:160px; }
+        .filter-group label { font-size:0.75rem; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:.05em;}
+        .filter-group input,
+        .filter-group select { background:rgba(255,255,255,0.06); border:1px solid var(--border-color); color:#fff; border-radius:8px; padding:9px 12px; font-size:0.9rem; font-family:'Outfit',sans-serif; }
+        .filter-group input:focus,
+        .filter-group select:focus { outline:none; border-color:#6366f1; }
+        .filter-group select option { background:#1e293b; }
+
+        /* ── SUMMARY CARDS ── */
+        .summary-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; margin-bottom:24px; }
+        .summary-card { background:rgba(255,255,255,0.04); border:1px solid var(--border-color); border-radius:12px; padding:16px 20px; }
+        .summary-card .card-label { font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:.07em; margin-bottom:6px;}
+        .summary-card .card-amount { font-size:1.5rem; font-weight:700; color:#fff; }
+        .summary-card .card-count { font-size:0.8rem; color:var(--text-dim); margin-top:4px; }
+        .summary-card.outright  { border-color:rgba(251,191,36,.3); }
+        .summary-card.outright .card-amount { color:#fbbf24; }
+        .summary-card.unpaid    { border-color:rgba(99,102,241,.3); }
+        .summary-card.unpaid .card-amount { color:#818cf8; }
+        .summary-card.encash   { border-color:rgba(6,182,212,.3); }
+        .summary-card.encash .card-amount { color:#22d3ee; }
+        .summary-card.paid      { border-color:rgba(34,197,94,.3); }
+        .summary-card.paid .card-amount { color:#4ade80; }
+
+        /* ── TABLE ── */
+        .commission-table { width:100%; border-collapse:collapse; }
+        .commission-table th { text-align:left; font-size:0.72rem; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:.07em; padding:0 14px 12px; white-space:nowrap; }
+        .commission-table td { padding:14px; font-size:0.88rem; border-bottom:1px solid var(--border-color); vertical-align:middle; }
+        .commission-table tr:last-child td { border-bottom:none; }
+        .commission-table tr:hover td { background:rgba(255,255,255,0.03); }
+
+        .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:999px; font-size:0.75rem; font-weight:600; }
+        .badge-outright  { background:rgba(251,191,36,.15); color:#fbbf24; }
+        .badge-unpaid    { background:rgba(99,102,241,.15); color:#818cf8; }
+        .badge-encash    { background:rgba(6,182,212,.15); color:#22d3ee; }
+        .badge-paid      { background:rgba(34,197,94,.15); color:#4ade80; }
+
+        .type-pill { display:inline-block; padding:2px 8px; border-radius:6px; font-size:0.75rem; font-weight:600; }
+        .type-one-time    { background:rgba(251,191,36,.1); color:#fbbf24; }
+        .type-residual    { background:rgba(99,102,241,.1); color:#818cf8; }
+        .type-collection  { background:rgba(6,182,212,.1); color:#22d3ee; }
+        .type-position    { background:rgba(168,85,247,.1); color:#c084fc; }
+
+        .amount-positive { color:#4ade80; font-weight:600; }
+
+        /* ── PAGINATION ── */
+        .pagination { display:flex; gap:8px; justify-content:center; margin-top:24px; flex-wrap:wrap;}
+        .page-btn { padding:6px 14px; border:1px solid var(--border-color); background:transparent; color:#fff; border-radius:8px; cursor:pointer; font-family:'Outfit',sans-serif; transition:all .2s; }
+        .page-btn:hover { background:rgba(99,102,241,0.15); border-color:#6366f1; }
+        .page-btn.active { background:#6366f1; border-color:#6366f1; font-weight:700; }
+
+        .empty-state { text-align:center; padding:60px 20px; color:var(--text-dim); }
+        .empty-state ion-icon { font-size:48px; display:block; margin:0 auto 16px; }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <button class="menu-btn" id="open-sidebar"><ion-icon name="menu-outline"></ion-icon></button>
+                <div class="header-profile">
+                    <div class="avatar"><img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Admin"></div>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <div class="welcome-banner" style="margin-bottom:28px;">
+                    <h1><ion-icon name="cash-outline" style="font-size:1.1em;vertical-align:middle;margin-right:10px;color:#fbbf24;"></ion-icon>Agent Commissions</h1>
+                    <p>Track all One-Time, Residual, Collection Fee, and Position-Based commissions earned by agents.</p>
+                </div>
+
+                <!-- Summary Cards (shown when filtering by agent) -->
+                <div id="summary-section" style="display:none">
+                    <div class="summary-cards" id="summary-cards"></div>
+                </div>
+
+                <!-- Filter Bar -->
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label>Agent ID / Name</label>
+                        <input type="text" id="filter-agent" placeholder="e.g. AG-0000001">
+                    </div>
+                    <div class="filter-group">
+                        <label>Commission Type</label>
+                        <select id="filter-type">
+                            <option value="">All Types</option>
+                            <option value="One-Time">One-Time</option>
+                            <option value="Residual">Residual</option>
+                            <option value="Collection Fee">Collection Fee</option>
+                            <option value="Position-Based">Position-Based</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Status</label>
+                        <select id="filter-status">
+                            <option value="">All Statuses</option>
+                            <option value="Outright">Outright</option>
+                            <option value="Unpaid">Unpaid</option>
+                            <option value="Pending Encashment">Pending Encashment</option>
+                            <option value="Paid">Paid</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary" onclick="loadCommissions(1)" style="padding:9px 24px; align-self:flex-end;">
+                        <ion-icon name="search-outline" style="margin-right:6px;"></ion-icon>Search
+                    </button>
+                </div>
+
+                <!-- Commission Table -->
+                <div class="glass-panel-simple" style="overflow-x:auto;">
+                    <table class="commission-table">
+                        <thead>
+                            <tr>
+                                <th>Agent</th>
+                                <th>Rank</th>
+                                <th>Type</th>
+                                <th>Level</th>
+                                <th>Source (Subscriber)</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="commissions-tbody">
+                            <tr><td colspan="8" class="empty-state">
+                                <ion-icon name="cash-outline"></ion-icon>
+                                Loading commissions...
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="pagination" class="pagination"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/sidebar-module.js"></script>
+    <script>
+        let currentPage = 1;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCommissions(1);
+
+            document.getElementById('filter-agent').addEventListener('keydown', e => {
+                if (e.key === 'Enter') loadCommissions(1);
+            });
+        });
+
+        async function loadCommissions(page = 1) {
+            currentPage = page;
+            const agentId = document.getElementById('filter-agent').value.trim();
+            const type    = document.getElementById('filter-type').value;
+            const status  = document.getElementById('filter-status').value;
+
+            const params = new URLSearchParams({ page });
+            if (agentId) params.append('agent_id', agentId);
+            if (type)    params.append('type', type);
+            if (status)  params.append('status', status);
+
+            const tbody = document.getElementById('commissions-tbody');
+            tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><ion-icon name="hourglass-outline"></ion-icon>Loading...</td></tr>`;
+
+            try {
+                const res  = await fetch(`../admin_API/get_agent_commissions.php?${params}`);
+                const data = await res.json();
+
+                if (data.status !== 'success') {
+                    tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><ion-icon name="alert-circle-outline"></ion-icon>${data.message}</td></tr>`;
+                    return;
+                }
+
+                // Show summary if agent-filtered
+                renderSummary(data.summary, agentId);
+
+                if (data.data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><ion-icon name="cash-outline"></ion-icon>No commissions found for the selected filters.</td></tr>`;
+                } else {
+                    tbody.innerHTML = data.data.map(c => `
+                        <tr>
+                            <td>
+                                <div style="font-weight:600">${c.agent_name || c.agent_id}</div>
+                                <div style="font-size:0.78rem;color:var(--text-dim)">${c.agent_id}</div>
+                            </td>
+                            <td style="color:var(--text-dim);font-size:0.85rem">${c.rank_name || '—'}</td>
+                            <td>${typePill(c.commission_type)}</td>
+                            <td style="text-align:center;color:var(--text-dim)">${c.level ? 'L' + c.level : '—'}</td>
+                            <td style="font-size:0.85rem;color:var(--text-dim)">${c.source_account_id}</td>
+                            <td class="amount-positive">₱${parseFloat(c.amount).toLocaleString('en-PH', {minimumFractionDigits:2})}</td>
+                            <td>${statusBadge(c.status)}</td>
+                            <td style="font-size:0.8rem;color:var(--text-dim)">${formatDate(c.created_at)}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                renderPagination(data.total, data.page, data.per_page);
+
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><ion-icon name="warning-outline"></ion-icon>Network error loading commissions.</td></tr>`;
+            }
+        }
+
+        function renderSummary(summary, agentId) {
+            const section = document.getElementById('summary-section');
+            if (!agentId || !summary || summary.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            section.style.display = 'block';
+
+            // Aggregate by status
+            const totals = {};
+            summary.forEach(s => {
+                if (!totals[s.status]) totals[s.status] = { amount: 0, count: 0 };
+                totals[s.status].amount += parseFloat(s.total);
+                totals[s.status].count  += parseInt(s.count);
+            });
+
+            const statusMap = {
+                'Outright':           { cls: 'outright',  label: 'Outright' },
+                'Unpaid':             { cls: 'unpaid',    label: 'Unpaid' },
+                'Pending Encashment': { cls: 'encash',    label: 'Pending Encashment' },
+                'Paid':               { cls: 'paid',      label: 'Paid' }
+            };
+
+            document.getElementById('summary-cards').innerHTML = Object.entries(totals).map(([st, v]) => {
+                const m = statusMap[st] || { cls: 'unpaid', label: st };
+                return `
+                    <div class="summary-card ${m.cls}">
+                        <div class="card-label">${m.label}</div>
+                        <div class="card-amount">₱${v.amount.toLocaleString('en-PH', {minimumFractionDigits:2})}</div>
+                        <div class="card-count">${v.count} record(s)</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderPagination(total, page, perPage) {
+            const pages = Math.ceil(total / perPage);
+            const container = document.getElementById('pagination');
+            if (pages <= 1) { container.innerHTML = ''; return; }
+
+            let html = '';
+            for (let i = 1; i <= pages; i++) {
+                html += `<button class="page-btn ${i===page?'active':''}" onclick="loadCommissions(${i})">${i}</button>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function typePill(type) {
+            const cls = {
+                'One-Time':       'type-one-time',
+                'Residual':       'type-residual',
+                'Collection Fee': 'type-collection',
+                'Position-Based': 'type-position'
+            }[type] || 'type-residual';
+            return `<span class="type-pill ${cls}">${type}</span>`;
+        }
+
+        function statusBadge(status) {
+            const cls = {
+                'Outright':           'badge-outright',
+                'Unpaid':             'badge-unpaid',
+                'Pending Encashment': 'badge-encash',
+                'Paid':               'badge-paid'
+            }[status] || 'badge-unpaid';
+            return `<span class="badge ${cls}">${status}</span>`;
+        }
+
+        function formatDate(dt) {
+            if (!dt) return '—';
+            const d = new Date(dt);
+            return d.toLocaleDateString('en-PH', { year:'numeric', month:'short', day:'numeric' })
+                 + ' ' + d.toLocaleTimeString('en-PH', { hour:'2-digit', minute:'2-digit' });
+        }
+    </script>
+</body>
+</html>

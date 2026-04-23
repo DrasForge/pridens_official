@@ -1,0 +1,25 @@
+{
+    "plan_name": "Emerald Test Plan",
+    "insurance_coverage": "Individual",
+    "payment_terms": "Every Month",
+    "subscription_term": 12,
+    "insurance_term": 12,
+    "quota_weight": 1.5,
+    "requires_beneficiaries": true,
+    "onboarding_product_id": 4,
+    "monthly_product_id": 3,
+    "post_term_enabled": false,
+    "otc_l1": 500,
+    "monthly_pvoucher": 100,
+    "position_residuals": [
+        {"rank": "Unit Manager", "amount": 150}
+    ],
+    "insurance_benefits": [
+        {"name": "Accidental Benefit", "amount": 100000, "contestability": false},
+        {"name": "Life Benefit", "amount": 50000, "contestability": true}
+    ],
+    "claim_requirements": ["Valid ID", "Birth Certificate"],
+    "billing_brackets": [
+        {"from": 1, "to": 31, "bill_on": 30}
+    ]
+}

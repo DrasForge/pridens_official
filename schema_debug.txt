@@ -1,0 +1,38 @@
+
+Table: pos_transactions
+id                        | int(11)
+receipt_number            | varchar(50)
+shift_id                  | int(11)
+customer_last_name        | varchar(100)
+customer_first_name       | varchar(100)
+customer_middle_name      | varchar(100)
+agent_referral_code       | varchar(20)
+discount_type             | enum('Regular','Senior','PWD')
+subtotal                  | decimal(15,2)
+discount_amount           | decimal(15,2)
+grand_total               | decimal(15,2)
+payment_method            | enum('Cash')
+tendered_amount           | decimal(15,2)
+change_amount             | decimal(15,2)
+status                    | enum('Completed','Voided','Refunded')
+reprint_count             | int(11)
+created_at                | timestamp
+is_used                   | tinyint(1)
+
+Table: pos_transaction_items
+id                        | int(11)
+transaction_id            | int(11)
+product_id                | int(11)
+product_name_snapshot     | varchar(255)
+price_snapshot            | decimal(15,2)
+quantity                  | int(11)
+subtotal                  | decimal(15,2)
+
+Table: pos_products
+id                        | int(11)
+sku                       | varchar(50)
+name                      | varchar(255)
+price                     | decimal(15,2)
+category                  | varchar(100)
+status                    | enum('Active','Inactive')
+created_at                | timestamp

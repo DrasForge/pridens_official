@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pridens POS Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <link rel="stylesheet" href="css/pos.css">
+    <link rel="stylesheet" href="css/pos_modals.css">
+    <!-- QR Code Generator -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="pos-app">
+
+        <!-- ===== TOP NAVIGATION BAR (OSPOS-style) ===== -->
+        <header class="pos-topbar">
+            <div class="topbar-brand">
+                <ion-icon name="storefront" class="brand-icon"></ion-icon>
+                <span class="brand-text">PRIDENS <strong>POS</strong></span>
+            </div>
+
+            <nav class="topbar-nav">
+                <button class="topbar-btn active" data-view="register" title="Sales Register (F2)">
+                    <ion-icon name="cart-outline"></ion-icon>
+                    <span>Sales</span>
+                </button>
+                <button class="topbar-btn" data-view="customers" title="Customers">
+                    <ion-icon name="people-outline"></ion-icon>
+                    <span>Customers</span>
+                </button>
+                <button class="topbar-btn" data-view="products" id="nav-products" title="Products">
+                    <ion-icon name="pricetag-outline"></ion-icon>
+                    <span>Products</span>
+                </button>
+                <button class="topbar-btn" id="nav-history" title="Transactions">
+                    <ion-icon name="receipt-outline"></ion-icon>
+                    <span>Transactions</span>
+                </button>
+                <button class="topbar-btn" id="nav-xreading" title="X-Reading (Shift Report)">
+                    <ion-icon name="document-text-outline"></ion-icon>
+                    <span>Reports</span>
+                </button>
+                <button class="topbar-btn" id="nav-closeshift" title="Cash Up / Close Shift (Z-Reading)">
+                    <ion-icon name="wallet-outline"></ion-icon>
+                    <span>Cash Up</span>
+                </button>
+            </nav>
+
+            <div class="topbar-right">
+                <div class="topbar-clock" id="live-clock">00:00 AM</div>
+                <div class="topbar-user">
+                    <ion-icon name="person-circle-outline"></ion-icon>
+                    <span id="admin-name">Admin</span>
+                </div>
+                <button class="topbar-btn exit-btn" id="nav-exit" title="Exit to Dashboard" onclick="window.location.href='../admin_folder/dashboard.html'">
+                    <ion-icon name="log-out-outline"></ion-icon>
+                </button>
+            </div>
+        </header>
+
+        <!-- ===== MAIN WORKSPACE ===== -->
+        <main class="pos-workspace">
+
+            <!-- === LEFT SIDE: Search + Cart Table === -->
+            <section class="register-left">
+
+                <!-- Search Bar (OSPOS-style) -->
+                <div class="search-row">
+                    <div class="search-box item-search-box">
+                        <ion-icon name="barcode-outline" class="search-icon"></ion-icon>
+                        <input type="text" id="item-search" placeholder="Search or scan item..." autocomplete="off">
+                        <div class="search-results-dropdown" id="item-search-results" style="display:none;"></div>
+                    </div>
+                    <div class="search-box customer-search-box">
+                        <ion-icon name="person-outline" class="search-icon"></ion-icon>
+                        <input type="text" id="customer-search" placeholder="Search customer..." autocomplete="off">
+                        <div class="search-results-dropdown" id="customer-search-results" style="display:none;"></div>
+                    </div>
+                    <button class="btn-icon" id="btn-new-sale" title="New Sale (F2)">
+                        <ion-icon name="add-circle-outline"></ion-icon>
+                    </button>
+                </div>
+
+                <!-- Selected Customer Badge -->
+                <div class="selected-customer-badge" id="selected-customer-badge" style="display:none;">
+                    <ion-icon name="person-circle"></ion-icon>
+                    <span id="selected-customer-name">—</span>
+                    <button class="badge-remove" id="remove-customer" title="Remove customer">×</button>
+                </div>
+
+                <!-- Cart Table (OSPOS-style editable) -->
+                <div class="cart-table-wrapper">
+                    <table class="cart-table" id="cart-table">
+                        <thead>
+                            <tr>
+                                <th class="col-item">Item Name</th>
+                                <th class="col-price">Price</th>
+                                <th class="col-qty">Qty</th>
+                                <th class="col-disc">Disc%</th>
+                                <th class="col-total">Total</th>
+                                <th class="col-action"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cart-tbody">
+                            <!-- Empty state -->
+                        </tbody>
+                    </table>
+                    <div class="empty-cart-msg" id="empty-cart-msg">
+                        <ion-icon name="cart-outline"></ion-icon>
+                        <p>No items in the current sale</p>
+                        <small>Search for an item or use the quick-pick buttons below</small>
+                    </div>
+                </div>
+
+                <!-- Quick-Pick Buttons (OSPOS-style colored grid) -->
+                <div class="quickpick-bar">
+                    <div class="quickpick-label">Quick Picks</div>
+                    <div class="quickpick-grid" id="quickpick-grid">
+                        <!-- Populated dynamically from products -->
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- === RIGHT SIDE: Totals + Payment === -->
+            <aside class="register-right">
+
+                <!-- Customer Name (Optional) -->
+                <div class="panel-section">
+                    <label class="panel-label">Customer Name (Optional)</label>
+                    <div class="customer-name-row">
+                        <input type="text" class="panel-input" id="cust-last-name" placeholder="Last Name" autocomplete="off">
+                        <input type="text" class="panel-input" id="cust-first-name" placeholder="First Name" autocomplete="off">
+                    </div>
+                    <input type="text" class="panel-input" id="cust-middle-name" placeholder="Middle Name" autocomplete="off" style="margin-top:6px;">
+                </div>
+
+                <!-- Agent Referral -->
+                <div class="panel-section">
+                    <label class="panel-label">Agent Referral Code (Optional)</label>
+                    <input type="text" class="panel-input" id="agent_code" placeholder="AG-0000001" autocomplete="off">
+                    <div class="agent-verification" id="agent-verification" style="display: none;">
+                        <span id="agent-status-icon"></span>
+                        <span id="agent-status-text"></span>
+                    </div>
+                </div>
+
+                <!-- Discount Type -->
+                <div class="panel-section">
+                    <label class="panel-label">Customer Type</label>
+                    <div class="discount-toggles">
+                        <button class="discount-btn active" data-type="Regular">Regular</button>
+                        <button class="discount-btn" data-type="Senior">Senior</button>
+                        <button class="discount-btn" data-type="PWD">PWD</button>
+                    </div>
+                </div>
+
+                <!-- Totals Breakdown -->
+                <div class="panel-section totals-section">
+                    <div class="totals-row">
+                        <span>Subtotal</span>
+                        <span id="subtotal-amount">₱0.00</span>
+                    </div>
+                    <div class="totals-row discount-row" id="discount-row" style="display:none;">
+                        <span>Discount <small id="discount-label"></small></span>
+                        <span id="discount-amount" class="discount-value">-₱0.00</span>
+                    </div>
+                    <div class="totals-row tax-row">
+                        <span>Tax (VAT Exempt)</span>
+                        <span>₱0.00</span>
+                    </div>
+                    <div class="totals-row grand-total-row">
+                        <span>TOTAL</span>
+                        <span id="total-amount">₱0.00</span>
+                    </div>
+                </div>
+
+                <!-- Payment Section (Inline — no modal needed) -->
+                <div class="panel-section payment-section">
+                    <label class="panel-label">Payment</label>
+                    <div class="payment-method-row">
+                        <select id="payment-method" class="panel-input">
+                            <option value="Cash">💵 Cash</option>
+                        </select>
+                    </div>
+                    <div class="payment-input-row">
+                        <label class="small-label">Amount Tendered</label>
+                        <input type="number" class="panel-input tendered-input" id="tendered-amount" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="change-display" id="change-display">
+                        <span class="change-label">Change</span>
+                        <span class="change-value" id="live-change-amount">₱0.00</span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="panel-section action-buttons">
+                    <button class="btn-action btn-cancel" id="btn-cancel-sale">
+                        <ion-icon name="trash-outline"></ion-icon> Cancel
+                    </button>
+                    <button class="btn-action btn-suspend" id="btn-suspend-sale" disabled>
+                        <ion-icon name="pause-outline"></ion-icon> Hold
+                    </button>
+                    <button class="btn-action btn-complete" id="btn-complete-sale" disabled>
+                        <ion-icon name="checkmark-circle-outline"></ion-icon> Complete Sale (F9)
+                    </button>
+                </div>
+
+            </aside>
+        </main>
+
+    </div>
+
+    <!-- ===== MODAL OVERLAY ===== -->
+    <div class="modal-overlay" id="modal-overlay" style="display:none;">
+
+        <!-- Open Shift Modal -->
+        <div class="modal" id="modal-shift">
+            <div class="modal-icon"><ion-icon name="cash-outline"></ion-icon></div>
+            <h2>Open Cash Register</h2>
+            <p>Enter your beginning cash balance to start this shift.</p>
+            <div class="input-group">
+                <label>Opening Cash (₱)</label>
+                <input type="number" id="opening-balance" value="0.00" step="0.01">
+            </div>
+            <button class="btn-action btn-complete" id="btn-open-shift" style="width:100%; margin-top:15px;">
+                <ion-icon name="play-outline"></ion-icon> START SHIFT
+            </button>
+        </div>
+
+        <!-- Success Modal — BIR Invoice Receipt -->
+        <div class="modal receipt-modal" id="modal-success" style="display:none;">
+            <div class="receipt-wrapper" id="receipt-wrapper">
+                <div class="thermal-receipt" id="thermal-receipt">
+                    <!-- Company Header -->
+                    <div class="r-center r-bold r-title">PRIDENS TRADING CORPORATION</div>
+                    <div class="r-center r-small">123 Business St., City, Philippines</div>
+                    <div class="r-center r-small">VAT REG TIN: 123-456-789-00000</div>
+                    <div class="r-center r-small">MIN: 123456789</div>
+                    <div class="r-center r-small">SN: AB123456</div>
+
+                    <div class="r-dashed"></div>
+
+                    <!-- Transaction Info -->
+                    <div class="r-row"><span>Date:</span><span id="r-date">—</span></div>
+                    <div class="r-row"><span>SI #:</span><span id="r-si-number">SI-00000000</span></div>
+                    <div class="r-row"><span>Cashier:</span><span id="r-cashier">Administrator</span></div>
+                    <div class="r-row"><span>Terminal:</span><span>TERM-WEB-01</span></div>
+                    <div class="r-row"><span>Customer:</span><span id="r-customer">WALK-IN</span></div>
+                    <div class="r-row"><span>Agent Ref:</span><span id="r-agent-ref">—</span></div>
+
+                    <div class="r-dashed"></div>
+
+                    <!-- Items Header -->
+                    <div class="r-items-header">
+                        <span class="r-col-qty">Qty</span>
+                        <span class="r-col-desc">Desc</span>
+                        <span class="r-col-price">Price</span>
+                        <span class="r-col-total">Total</span>
+                    </div>
+                    <div class="r-items-body" id="r-items-body">
+                        <!-- Filled by JS -->
+                    </div>
+
+                    <div class="r-dashed"></div>
+
+                    <!-- Totals -->
+                    <div class="r-row r-total-row"><span>Subtotal</span><span id="r-subtotal">0.00</span></div>
+                    <div class="r-row r-total-row"><span>Less: Discount</span><span id="r-discount">0.00</span></div>
+                    <div class="r-row r-bold r-grand"><span>TOTAL DUE</span><span id="r-total-due">0.00</span></div>
+
+                    <div class="r-spacer"></div>
+
+                    <div class="r-row"><span>Cash</span><span id="r-cash">0.00</span></div>
+                    <div class="r-row"><span>Change</span><span id="r-change">0.00</span></div>
+
+                    <div class="r-dashed"></div>
+
+                    <!-- VAT Breakdown -->
+                    <div class="r-row r-small"><span>Vatable Sales</span><span id="r-vatable">0.00</span></div>
+                    <div class="r-row r-small"><span>VAT Amount</span><span id="r-vat-amount">0.00</span></div>
+                    <div class="r-row r-small"><span>VAT Exempt Sales</span><span id="r-vat-exempt">0.00</span></div>
+                    <div class="r-row r-small"><span>Zero Rated Sales</span><span>0.00</span></div>
+
+                    <div class="r-spacer"></div>
+
+                    <!-- BIR Disclaimer -->
+                    <div class="r-center r-bold r-small r-disclaimer">THIS DOCUMENT IS NOT VALID FOR CLAIM OF INPUT TAX</div>
+                    <div class="r-center r-small r-dim">(Unless configured as VAT Invoice)</div>
+
+                    <div class="r-spacer"></div>
+
+                    <!-- Accreditation -->
+                    <div class="r-center r-small">Accreditation No: 048-000000000-000000</div>
+                    <div class="r-center r-small">Date Issued: 08/01/2024</div>
+                    <div class="r-center r-small">Valid Until: 07/31/2029</div>
+                    <div class="r-center r-small r-bold">PTU No: FP122024-001-0000001</div>
+
+                    <div class="r-spacer"></div>
+
+                    <!-- QR Code -->
+                    <div class="r-qr-container">
+                        <div id="receipt-qrcode"></div>
+                    </div>
+
+                    <div class="r-spacer"></div>
+
+                    <div class="r-center r-thanks">Thank you for shopping!</div>
+                </div>
+            </div>
+            <div class="modal-actions receipt-actions">
+                <button class="btn-action btn-cancel" id="btn-new-order"><ion-icon name="add-outline"></ion-icon> New Sale</button>
+                <button class="btn-action btn-complete" id="btn-print-receipt"><ion-icon name="print-outline"></ion-icon> Print Receipt</button>
+            </div>
+        </div>
+
+        <!-- X-Reading Modal -->
+        <div class="modal" id="modal-xreading" style="display:none;">
+            <div class="modal-icon"><ion-icon name="document-text"></ion-icon></div>
+            <h2>X-Reading (Shift Report)</h2>
+            <div class="report-grid">
+                <div class="report-row"><span>Opening Balance</span><strong id="x-opening">₱0.00</strong></div>
+                <div class="report-row"><span>Total Sales</span><strong id="x-sales">₱0.00</strong></div>
+                <div class="report-row"><span>Total Discounts</span><strong id="x-discounts">₱0.00</strong></div>
+                <div class="report-row highlight"><span>Expected Drawer</span><strong id="x-expected">₱0.00</strong></div>
+            </div>
+            <button class="btn-action btn-cancel" onclick="document.getElementById('modal-overlay').style.display='none'" style="width:100%;margin-top:15px;">Close</button>
+        </div>
+
+        <!-- Z-Reading Modal -->
+        <div class="modal" id="modal-zreading" style="display:none;">
+            <div class="modal-icon warn"><ion-icon name="lock-closed"></ion-icon></div>
+            <h2>Z-Reading (Close Shift)</h2>
+            <p>This will permanently close your shift and generate the Z-Reading counter. This cannot be undone.</p>
+            <div class="input-group">
+                <label>Actual Cash in Drawer (₱)</label>
+                <input type="number" id="actual-cash" step="0.01" placeholder="Count your drawer">
+            </div>
+            <div class="modal-actions" style="margin-top:15px;">
+                <button class="btn-action btn-cancel" onclick="document.getElementById('modal-overlay').style.display='none'">Cancel</button>
+                <button class="btn-action btn-danger" id="btn-confirm-close-shift">
+                    <ion-icon name="lock-closed-outline"></ion-icon> CLOSE SHIFT
+                </button>
+            </div>
+        </div>
+
+        <!-- Z-Success Modal -->
+        <div class="modal" id="modal-zsuccess" style="display:none;">
+            <div class="modal-icon"><ion-icon name="document-text"></ion-icon></div>
+            <h2>Z-Reading Generated</h2>
+            <p>Shift permanently closed.</p>
+            <div class="report-grid">
+                <div class="report-row"><span>Z-Counter</span><strong id="z-counter">—</strong></div>
+                <div class="report-row"><span>Gross Sales</span><strong id="z-sales">₱0.00</strong></div>
+                <div class="report-row"><span>Variance</span><strong id="z-variance">₱0.00</strong></div>
+                <div class="report-row highlight"><span>Accumulated Grand Total</span><strong id="z-grand-total">₱0.00</strong></div>
+            </div>
+            <button class="btn-action btn-complete" onclick="window.location.href='../admin_folder/dashboard.html'" style="width:100%;margin-top:15px;">
+                <ion-icon name="exit-outline"></ion-icon> Exit POS
+            </button>
+        </div>
+
+        <!-- History Modal -->
+        <div class="modal wide-modal" id="modal-history" style="display:none;">
+            <div class="modal-icon"><ion-icon name="receipt"></ion-icon></div>
+            <h2>Transaction History (Current Shift)</h2>
+            <div class="history-table-wrap">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>OR #</th>
+                            <th>Time</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-tbody">
+                        <tr><td colspan="6" class="empty-row">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn-action btn-cancel" onclick="document.getElementById('modal-overlay').style.display='none'" style="width:100%;margin-top:15px;">Close</button>
+        </div>
+
+        <!-- Products Modal -->
+        <div class="modal wide-modal" id="modal-products" style="display:none;">
+            <div class="modal-icon"><ion-icon name="pricetag"></ion-icon></div>
+            <h2>Product Catalog</h2>
+            <div class="history-table-wrap">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-tbody">
+                        <tr><td colspan="5" class="empty-row">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn-action btn-cancel" onclick="document.getElementById('modal-overlay').style.display='none'" style="width:100%;margin-top:15px;">Close</button>
+        </div>
+
+    </div>
+
+    <script src="js/pos.js"></script>
+</body>
+</html>

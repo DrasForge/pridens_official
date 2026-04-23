@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Subscriber - Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/accounts.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-top: 25px;
+        }
+        .detail-card {
+            background: rgba(30,34,50,0.7);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .detail-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 12px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px dashed rgba(255,255,255,0.05);
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+        .detail-value {
+            color: #fff;
+            font-weight: 500;
+            font-size: 14px;
+            text-align: right;
+            max-width: 60%;
+            word-wrap: break-word;
+        }
+        .beneficiary-list {
+            display: grid;
+            gap: 15px;
+        }
+        .beneficiary-item {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary-color);
+        }
+        .ben-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+        .ben-info {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .status-badge.badge-active { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); padding: 4px 10px; border-radius: 20px; font-size:12px; }
+        .status-badge.badge-pending { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); padding: 4px 10px; border-radius: 20px; font-size:12px; }
+        .status-badge.badge-rejected { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); padding: 4px 10px; border-radius: 20px; font-size:12px; }
+        .header-profile-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .profile-avatar {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+        }
+        .profile-titles h1 { font-size: 24px; color: #fff; margin-bottom: 4px; }
+        .profile-titles p { color: var(--text-muted); font-size: 14px; margin: 0; }
+        .btn-back { display:flex; align-items:center; gap:5px; color:var(--text-muted); text-decoration:none; margin-bottom: 20px; font-size:14px; transition:0.3s; }
+        .btn-back:hover { color:#fff; }
+        
+        /* Pending Insurance Styling */
+        .insurance-pending {
+            opacity: 0.6;
+            filter: grayscale(0.5);
+            position: relative;
+        }
+        .pending-overlay {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            z-index: 2;
+        }
+
+        /* Payment Schedule Table */
+        .table-scroll-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        .schedule-table th {
+            padding: 15px 20px;
+            background: rgba(15, 23, 42, 0.4);
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .schedule-table td {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 14px;
+            color: #fff;
+            vertical-align: middle;
+        }
+        .schedule-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .status-pill {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status-pill.paid { background: rgba(34, 197, 94, 0.1); color: #4ade80; }
+        .status-pill.overdue { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+        .status-pill.pending { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-placeholder">A</div>
+                <h2>Admin Panel</h2>
+                <button class="mobile-toggle" id="close-sidebar">
+                    <ion-icon name="close-outline"></ion-icon>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">
+                    <ion-icon name="home-outline"></ion-icon>
+                    <span>Dashboard</span>
+                </a>
+                
+                <div class="nav-group">
+                    <div class="nav-item nav-item-has-children active" id="subscribers-menu-toggle">
+                        <div class="nav-item-icon-text">
+                            <ion-icon name="people-outline"></ion-icon>
+                            <span>Subscribers</span>
+                        </div>
+                        <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+                    </div>
+                    <ul class="sub-menu open" id="subscribers-submenu">
+                        <li><a href="accounts.html" class="sub-item active">Accounts</a></li>
+                        <li><a href="insurance_approvals.html" class="sub-item">Insurance</a></li>
+                        <li><a href="subscription_plans.html" class="sub-item">Subscription Plans</a></li>
+                        <li><a href="pvoucher_ledger.html" class="sub-item">P-Voucher Ledger</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-item nav-item-has-children" id="pos-menu-toggle">
+                        <div class="nav-item-icon-text">
+                            <ion-icon name="cart-outline"></ion-icon>
+                            <span>POS Management</span>
+                        </div>
+                        <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+                    </div>
+                    <ul class="sub-menu" id="pos-submenu">
+                        <li><a href="products.html" class="sub-item">Products</a></li>
+                        <li><a href="#" class="sub-item">Inventory</a></li>
+                        <li><a href="#" class="sub-item">Transactions</a></li>
+                        <li><a href="#" class="sub-item">Reports</a></li>
+                    </ul>
+                </div>
+                
+                <div class="nav-group">
+                    <div class="nav-item nav-item-has-children" id="agents-menu-toggle">
+                        <div class="nav-item-icon-text">
+                            <ion-icon name="briefcase-outline"></ion-icon>
+                            <span>Agents</span>
+                        </div>
+                        <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+                    </div>
+                    <ul class="sub-menu" id="agents-submenu">
+                        <li><a href="agent_accounts.html" class="sub-item">Manage Accounts</a></li>
+                        <li><a href="agent_ranks.html" class="sub-item">Ranks & Qualifications</a></li>
+                        <li><a href="agent_teams.html" class="sub-item">Manage Teams</a></li>
+                        <li><a href="agent_applications.html" class="sub-item">Applications</a></li>
+                        <li><a href="agent_app_forms.html" class="sub-item">App Forms</a></li>
+                        <li><a href="agent_commissions.html" class="sub-item">Commissions</a></li>
+                        <li><a href="agent_encashments.html" class="sub-item">Encashments</a></li>
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="#" class="nav-item" id="logout-btn">
+                    <ion-icon name="log-out-outline"></ion-icon>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-header">
+                <button class="menu-btn" id="open-sidebar">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </button>
+                <div class="header-search">
+                    <ion-icon name="search-outline"></ion-icon>
+                    <input type="text" placeholder="Search anything...">
+                </div>
+                <div class="header-profile">
+                    <div class="notification-bell">
+                        <ion-icon name="notifications-outline"></ion-icon>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="avatar">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Admin">
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-content accounts-content">
+                <a href="accounts.html" class="btn-back"><ion-icon name="arrow-back-outline"></ion-icon> Back to Accounts</a>
+                
+                <div class="welcome-banner" style="margin-bottom: 24px;">
+                    <div class="header-profile-section" id="profileHeader">
+                        <div class="profile-avatar" id="avatarInitials">--</div>
+                        <div class="profile-titles">
+                            <h1 id="fullName">Loading...</h1>
+                            <p><span id="accountId">--</span> • <span id="statusBadge" class="status-badge">--</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="loadingIndicator" style="text-align: center; padding: 50px;">
+                    <div class="loader" style="margin: 0 auto; border-top-color: var(--primary-color);"></div>
+                </div>
+
+                <div id="detailsContainer" class="details-grid" style="display: none;">
+                    
+                    <!-- Account & Registration -->
+                    <div class="detail-card">
+                        <h3><ion-icon name="id-card-outline"></ion-icon> Account & Registration</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">Email Address</span>
+                            <span class="detail-value" id="valEmail">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Joined Date</span>
+                            <span class="detail-value" id="valJoined">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Sales Invoice</span>
+                            <span class="detail-value" id="valInvoice">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Referring Agent</span>
+                            <span class="detail-value" id="valAgent">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Subscription Status</span>
+                            <span class="detail-value"><span id="valSubStatus">--</span><br><small id="valSubApprovedBy" style="color:var(--text-muted); font-size:10px;"></small></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Insurance Status</span>
+                            <span class="detail-value"><span id="valInsStatus">--</span><br><small id="valInsApprovedBy" style="color:var(--text-muted); font-size:10px;"></small></span>
+                        </div>
+                    </div>
+
+                    <!-- Personal Information -->
+                    <div class="detail-card">
+                        <h3><ion-icon name="person-outline"></ion-icon> Personal Information</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">Date of Birth</span>
+                            <span class="detail-value" id="valDOB">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Place of Birth</span>
+                            <span class="detail-value" id="valPOB">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Gender</span>
+                            <span class="detail-value" id="valGender">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Civil Status</span>
+                            <span class="detail-value" id="valCivil">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Nationality</span>
+                            <span class="detail-value" id="valNationality">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Contact & Address -->
+                    <div class="detail-card">
+                        <h3><ion-icon name="location-outline"></ion-icon> Contact & Address</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">Contact Number</span>
+                            <span class="detail-value" id="valPhone">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">House/Street</span>
+                            <span class="detail-value" id="valStreet">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Barangay</span>
+                            <span class="detail-value" id="valBrgy">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">City</span>
+                            <span class="detail-value" id="valCity">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Region</span>
+                            <span class="detail-value" id="valRegion">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Zip Code</span>
+                            <span class="detail-value" id="valZip">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Work & Income -->
+                    <div class="detail-card">
+                        <h3><ion-icon name="briefcase-outline"></ion-icon> Work & Income</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">Occupation</span>
+                            <span class="detail-value" id="valOccupation">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Source of Income</span>
+                            <span class="detail-value" id="valSource">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Monthly Income</span>
+                            <span class="detail-value" id="valIncome">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Subscription Plan Details -->
+                    <div class="detail-card" id="planDetailsCard" style="grid-column: 1 / -1; display: none;">
+                        <h3><ion-icon name="ribbon-outline"></ion-icon> Active Subscription Plan</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <h4 style="color:var(--text-muted); font-size:12px; text-transform:uppercase; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:5px;">General Details</h4>
+                                <div class="detail-row"><span class="detail-label">Plan Name</span><span class="detail-value" id="valPlanName" style="color: #facc15;">--</span></div>
+                                <div class="detail-row"><span class="detail-label">Payment Terms</span><span class="detail-value" id="valPlanTerms">--</span></div>
+                                <div class="detail-row"><span class="detail-label">Subscription Term</span><span class="detail-value" id="valPlanSubTerm">--</span></div>
+                                <div class="detail-row" id="rowPlanInsTerm"><span class="detail-label">Insurance Term</span><span class="detail-value" id="valPlanInsTerm">--</span></div>
+                                <div class="detail-row" id="rowPlanCont"><span class="detail-label">Contestability Period (Days)</span><span class="detail-value" id="valPlanCont">--</span></div>
+                                <div class="detail-row" id="rowPlanReqBen"><span class="detail-label">Requires Beneficiaries</span><span class="detail-value" id="valPlanReqBen">--</span></div>
+                                <div class="detail-row"><span class="detail-label">Purchase Date (POS)</span><span class="detail-value" id="valPlanPurchase">--</span></div>
+                                <div class="detail-row"><span class="detail-label">Billing Day</span><span class="detail-value" id="valBillingDay" style="color: #6366f1; font-weight: 700;">--</span></div>
+                                <div class="detail-row"><span class="detail-label">Next Billing Date</span><span class="detail-value" id="valNextBilling" style="color: #6366f1; font-weight: 700;">--</span></div>
+                            </div>
+                            <div>
+                                <h4 style="color:var(--text-muted); font-size:12px; text-transform:uppercase; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:5px;">Subscription Plan Financials</h4>
+                                <div class="detail-row"><span class="detail-label">One-time Fee</span><span class="detail-value" id="valPlanOTCFee">--</span></div>
+                                <div class="detail-row"><span class="detail-label">Monthly Subscription Fee</span><span class="detail-value" id="valPlanMonthlyFee">--</span></div>
+                                <div class="detail-row"><span class="detail-label">Post-term subscription fee</span><span class="detail-value" id="valPlanPostTerm">--</span></div>
+                                <div class="detail-row"><span class="detail-label">monthly P-voucher</span><span class="detail-value" id="valPlanPVoucher" style="color: #4ade80;">--</span></div>
+                                <div class="detail-row"><span class="detail-label">monthly points</span><span class="detail-value" id="valPlanPoints" style="color: #38bdf8;">--</span></div>
+
+                                <h4 style="color:var(--text-muted); font-size:12px; text-transform:uppercase; margin-top:20px; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:5px;">Subscription Report</h4>
+                                <div class="detail-row"><span class="detail-label">Total Subscription Payable</span><span class="detail-value" id="valReportTotalPayable">--</span></div>
+                                <div class="detail-row"><span class="detail-label">Total Paid monthly fee</span><span class="detail-value" id="valReportTotalPaid">--</span></div>
+                                <div class="detail-row"><span class="detail-label">total monthly not yet paid</span><span class="detail-value" id="valReportNotPaid">--</span></div>
+                                <div class="detail-row"><span class="detail-label">Total count of monthly p-voucher received</span><span class="detail-value" id="valReportPVouchers">--</span></div>
+                                <div class="detail-row"><span class="detail-label">total points received</span><span class="detail-value" id="valReportPoints">--</span></div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 20px; position: relative;" id="insuranceBenefitsSection">
+                            <div id="pendingInsuranceInfo" class="pending-overlay" style="display: none;"><ion-icon name="time-outline" style="vertical-align: middle;"></ion-icon> PENDING APPROVAL</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px;">
+                                <h4 style="color:var(--text-muted); font-size:12px; text-transform:uppercase; margin-bottom:0;">Insurance Benefits</h4>
+                                <button id="btnApproveInsurance" class="btn-action" style="background: var(--primary-color); padding: 4px 12px; font-size: 11px; display: none;">
+                                    <ion-icon name="checkmark-circle-outline"></ion-icon> Approve Insurance
+                                </button>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;" id="insuranceBenefitsContainer">
+                                <div class="detail-row"><span class="detail-label">Accidental Coverage</span><span class="detail-value" id="valInsAccidental">--</span></div>
+                                <div class="detail-row"><span class="detail-label">Life Benefit</span><span class="detail-value" id="valInsLife">--</span></div>
+                                <div class="detail-row" style="grid-column: 1 / -1;"><span class="detail-label">Burial Expense</span><span class="detail-value" id="valInsBurial">--</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Beneficiaries -->
+                    <div class="detail-card">
+                        <h3><ion-icon name="people-outline"></ion-icon> Beneficiaries</h3>
+                        <div id="beneficiariesList" class="beneficiary-list">
+                            <div class="detail-label">No beneficiaries registered.</div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Schedule (Checklist) -->
+                    <div class="detail-card" style="grid-column: 1 / -1;">
+                        <h3><ion-icon name="calendar-outline"></ion-icon> Payment Schedule (Checklist)</h3>
+                        <div class="table-scroll-container">
+                            <table class="schedule-table">
+                                <thead>
+                                    <tr>
+                                        <th>Due Date</th>
+                                        <th>Expected</th>
+                                        <th>Status</th>
+                                        <th>Paid Date</th>
+                                        <th>Ref #</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paymentScheduleBody">
+                                    <!-- Data populated via JS -->
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                            No payment data available.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/view_subscriber.js"></script>
+</body>
+</html>

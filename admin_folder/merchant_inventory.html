@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Marketplace - Stock Inventory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        .inventory-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; overflow: hidden; padding: 24px; }
+        .inv-table { width: 100%; border-collapse: collapse; }
+        .inv-table th { background: rgba(255,255,255,0.05); padding: 18px; text-align: left; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+        .inv-table td { padding: 18px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
+        .inv-table tr:hover { background: rgba(99, 102, 241, 0.03); }
+
+        .prod-img { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; background: rgba(255,255,255,0.05); }
+        .stock-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 8px 12px; border-radius: 8px; width: 80px; font-weight: 700; text-align: center; }
+        .stock-input:focus { border-color: #6366f1; outline: none; }
+
+        .btn-update { background: #6366f1; color: #fff; padding: 8px 16px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; }
+        .btn-update:hover { background: #4f46e5; transform: translateY(-1px); }
+        .btn-update:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .status-pill { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+        .st-low { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+        .st-ok { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation">
+        <div class="orb orb-1"></div>
+    </div>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <a href="merchants.html" style="color:var(--text-dim); font-size:1.5rem; display:flex;">
+                        <ion-icon name="arrow-back-outline"></ion-icon>
+                    </a>
+                    <div>
+                        <h1 id="merchant-name">Stock Inventory</h1>
+                        <p id="merchant-code" style="color:var(--text-dim); font-size:0.85rem;">Manage granular stock levels</p>
+                    </div>
+                </div>
+                <div class="header-search" style="flex:1; max-width:400px; margin-left:40px;">
+                    <ion-icon name="search-outline"></ion-icon>
+                    <input type="text" id="inventory-search" placeholder="Search SKU or Product Name..." oninput="filterInventory()">
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <div class="inventory-card fade-in">
+                    <div id="inventory-container">
+                        <div style="text-align:center; padding:100px;">
+                            <ion-icon name="hourglass-outline" style="font-size:32px; animation:spin 1s linear infinite; color:#6366f1;"></ion-icon>
+                            <p style="margin-top:16px; color:var(--text-dim);">Loading stock details...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/marketplace-sidebar.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const merchantId = urlParams.get('id') || urlParams.get('merchant_id');
+        let allInventory = [];
+
+        if (!merchantId) {
+            alert('Invalid Merchant ID');
+            window.location.href = 'merchants.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMerchantInfo();
+            loadInventory();
+        });
+
+        async function loadMerchantInfo() {
+            try {
+                const res = await fetch(`../admin_API/get_merchant_detail.php?id=${merchantId}`);
+                const json = await res.json();
+                if (json.status === 'success') {
+                    document.getElementById('merchant-name').textContent = `${json.data.store_name} Inventory`;
+                }
+            } catch(e) {}
+        }
+
+        async function loadInventory() {
+            const container = document.getElementById('inventory-container');
+            try {
+                const res = await fetch(`../admin_API/get_merchant_inventory.php?merchant_id=${merchantId}`);
+                const json = await res.json();
+
+                if (json.status !== 'success') {
+                    container.innerHTML = `<div style="padding:40px; text-align:center; color:#f87171;">${json.message}</div>`;
+                    return;
+                }
+
+                allInventory = json.data;
+                renderInventory(allInventory);
+
+            } catch (e) {
+                container.innerHTML = `<div style="padding:40px; text-align:center; color:#f87171;">Connection Error</div>`;
+            }
+        }
+
+        function renderInventory(data) {
+            const container = document.getElementById('inventory-container');
+            if (data.length === 0) {
+                container.innerHTML = `<div style="padding:80px; text-align:center; color:var(--text-dim);">No stock items found.</div>`;
+                return;
+            }
+
+            let html = `
+                <table class="inv-table">
+                    <thead>
+                        <tr>
+                            <th>Item Details</th>
+                            <th>SKU</th>
+                            <th>Brand / Category</th>
+                            <th style="width:120px;">Current Stock</th>
+                            <th style="width:150px;">Update</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.forEach(item => {
+                const img = item.display_image ? `../admin_API/${item.display_image}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(item.display_name)}&background=random&color=fff`;
+                const isLow = parseInt(item.stock) < 5;
+                
+                html += `
+                    <tr>
+                        <td style="display:flex; align-items:center; gap:12px;">
+                            <img src="${img}" class="prod-img">
+                            <div>
+                                <div style="font-weight:700; color:#fff;">${item.display_name}</div>
+                                <div style="font-size:0.75rem; color:var(--text-dim);">${item.type === 'model' ? 'Variant' : 'Standalone'}</div>
+                            </div>
+                        </td>
+                        <td style="font-family:monospace; color:#818cf8; font-size:0.85rem;">${item.sku || 'N/A'}</td>
+                        <td>
+                            <div style="font-size:0.85rem; color:#fff;">${item.brand || 'No Brand'}</div>
+                            <div style="font-size:0.7rem; color:var(--text-dim);">${item.category}</div>
+                        </td>
+                        <td>
+                            <div style="display:flex; flex-direction:column; gap:4px;">
+                                <span class="status-pill ${isLow ? 'st-low' : 'st-ok'}" style="width:fit-content;">${item.stock} Units</span>
+                                ${isLow ? '<span style="font-size:0.6rem; color:#f87171;">Low Stock!</span>' : ''}
+                            </div>
+                        </td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <input type="number" class="stock-input" id="input-${item.type}-${item.item_id}" value="${item.stock}" min="0">
+                                <button class="btn-update" onclick="updateStock('${item.type}', ${item.item_id}, this)">
+                                    Save
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        async function updateStock(type, id, btn) {
+            const input = document.getElementById(`input-${type}-${id}`);
+            const newStock = parseInt(input.value);
+            
+            if (isNaN(newStock) || newStock < 0) {
+                alert('Please enter a valid stock quantity');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<ion-icon name="sync" style="animation:spin 1s linear infinite;"></ion-icon>';
+
+            try {
+                const res = await fetch(`../admin_API/update_merchant_stock.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, id, stock: newStock })
+                });
+                const json = await res.json();
+                
+                if (json.status === 'success') {
+                    // Update the row visually
+                    const pill = btn.closest('tr').querySelector('.status-pill');
+                    pill.textContent = `${newStock} Units`;
+                    pill.className = `status-pill ${newStock < 5 ? 'st-low' : 'st-ok'}`;
+                    const lowText = btn.closest('tr').querySelector('span[style*="f87171"]');
+                    if (newStock < 5 && !lowText) {
+                        pill.insertAdjacentHTML('afterend', '<span style="font-size:0.6rem; color:#f87171;">Low Stock!</span>');
+                    } else if (newStock >= 5 && lowText) {
+                        lowText.remove();
+                    }
+                } else {
+                    alert(json.message);
+                }
+            } catch (e) {
+                alert('Connection error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save';
+            }
+        }
+
+        function filterInventory() {
+            const q = document.getElementById('inventory-search').value.toLowerCase();
+            const filtered = allInventory.filter(i => 
+                i.display_name.toLowerCase().includes(q) || 
+                (i.sku && i.sku.toLowerCase().includes(q)) ||
+                (i.seller_sku && i.seller_sku.toLowerCase().includes(q))
+            );
+            renderInventory(filtered);
+        }
+    </script>
+</body>
+</html>

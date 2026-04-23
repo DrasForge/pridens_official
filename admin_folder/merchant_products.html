@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Marketplace - Product Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        .list-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; overflow: hidden; padding: 20px; }
+        .prod-table { width: 100%; border-collapse: collapse; }
+        .prod-table th { background: rgba(255,255,255,0.05); padding: 18px; text-align: left; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+        .prod-table td { padding: 18px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
+        .prod-table tr:hover { background: rgba(99, 102, 241, 0.03); }
+        
+        /* Category Tabs */
+        .tabs-navigation { display: flex; gap: 32px; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 24px; padding: 0 10px; overflow-x: auto; scrollbar-width: none; }
+        .tabs-navigation::-webkit-scrollbar { display: none; }
+        .tab-item { padding: 12px 0; color: var(--text-dim); cursor: pointer; font-size: 0.95rem; font-weight: 600; position: relative; transition: all 0.2s; white-space: nowrap; }
+        .tab-item:hover { color: #fff; }
+        .tab-item.active { color: #6366f1; }
+        .tab-item.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; background: #6366f1; border-radius: 3px; }
+
+        .prod-img { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; background: rgba(255,255,255,0.05); }
+        .price-badge { font-weight: 700; color: #fff; font-size: 1.1rem; }
+        .stock-badge { padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; }
+        .stock-ok { background: rgba(34, 197, 94, 0.1); color: #4ade80; }
+        .stock-low { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+        
+        .cat-separator { background: rgba(99, 102, 241, 0.08); padding: 10px 18px; font-weight: 800; font-size: 0.75rem; color: #818cf8; text-transform: uppercase; letter-spacing: 1px; }
+
+        .btn-add { background: #6366f1; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; text-decoration: none; }
+        .btn-add:hover { background: #4f46e5; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); }
+
+        .btn-action { width: 36px; height: 36px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; border: none; cursor: pointer; transition: all 0.2s; margin-left: 8px; font-size: 1.1rem; }
+        .btn-edit { background: rgba(99, 102, 241, 0.1); color: #818cf8; }
+        .btn-edit:hover { background: #6366f1; color: #fff; }
+        .btn-delete { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+        .btn-delete:hover { background: #ef4444; color: #fff; }
+
+        .status-pill { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+        .st-active { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+        .st-inactive { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation">
+        <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+    </div>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <button class="menu-btn" id="open-sidebar"><ion-icon name="menu-outline"></ion-icon></button>
+                <div class="header-profile">
+                    <div class="avatar"><img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Admin"></div>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:32px;">
+                    <div>
+                        <a href="merchants.html" style="color:var(--text-dim); text-decoration:none; font-size:0.9rem; display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+                            <ion-icon name="arrow-back-outline"></ion-icon> Back to Merchants
+                        </a>
+                        <h1 id="merchant-name">Marketplace Inventory</h1>
+                        <p style="color:var(--text-dim);" id="merchant-code">LOADING...</p>
+                    </div>
+                    <a href="#" id="link-add-product" class="btn-add">
+                        <ion-icon name="add-circle-outline"></ion-icon> Add New Product
+                    </a>
+                </div>
+
+                <!-- Exclusive Offer Configuration (NEW) -->
+                <div class="list-card fade-in" style="margin-bottom:24px; border:1px solid rgba(129, 140, 248, 0.2); background: linear-gradient(145deg, rgba(99, 102, 241, 0.05) 0%, rgba(0,0,0,0) 100%);">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
+                        <div>
+                            <h2 style="font-size:1.2rem; color:#818cf8; display:flex; align-items:center; gap:8px;">
+                                <ion-icon name="star-outline"></ion-icon> Pridens Exclusive Offer Settings
+                            </h2>
+                            <p style="color:var(--text-dim); font-size:0.85rem; margin-top:4px;">Define special deduction percentages for Pridens Subscribers. A fixed 1.5% points economy buffer is automatically added to fund the reward system (₱500 = 4 pts).</p>
+                        </div>
+                        <button onclick="saveExclusiveOffers()" class="btn-publish" style="padding:10px 20px;">
+                            <ion-icon name="save-outline"></ion-icon> Update Offer Rates
+                        </button>
+                    </div>
+                    
+                    <div id="exclusive-plans-container" class="form-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:24px;">
+                        <!-- Dynamically loaded plans -->
+                        <div style="padding:20px; color:var(--text-dim); font-style:italic;">Loading exclusive offer rates...</div>
+                    </div>
+                </div>
+
+                <div class="list-card fade-in">
+                    <!-- Shop Categories Tabs -->
+                    <div class="tabs-navigation" id="categories-tabs">
+                        <div class="tab-item active" onclick="switchCategory(0, this)">All Products</div>
+                    </div>
+
+                    <div id="products-table-container">
+                        <div style="text-align:center; padding:100px;">
+                            <ion-icon name="hourglass-outline" style="font-size:32px; animation:spin 1s linear infinite; color:#6366f1;"></ion-icon>
+                            <p style="margin-top:16px; color:var(--text-dim);">Scanning marketplace for products...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/marketplace-sidebar.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const merchantId = urlParams.get('id') || urlParams.get('merchant_id');
+        let selectedShopCatId = 0;
+
+        if (!merchantId) {
+            alert('Invalid Merchant ID');
+            window.location.href = 'merchants.html';
+        }
+
+        document.getElementById('link-add-product').href = `merchant_product_editor.html?merchant_id=${merchantId}`;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMerchantInfo();
+            loadCategoryTabs();
+            loadExclusiveOffers();
+            loadProducts();
+        });
+
+        let currentOffers = [];
+
+        async function loadExclusiveOffers() {
+            try {
+                const res = await fetch(`../admin_API/get_merchant_plans_offers.php?merchant_id=${merchantId}`);
+                const json = await res.json();
+                if (json.status === 'success') {
+                    currentOffers = json.data;
+                    renderExclusiveOffers();
+                }
+            } catch(e) {}
+        }
+
+        function renderExclusiveOffers() {
+            const container = document.getElementById('exclusive-plans-container');
+            container.innerHTML = currentOffers.map(plan => {
+                const total = (parseFloat(plan.discount_percent) + 1.5).toFixed(2);
+                return `
+                    <div style="background:rgba(255,255,255,0.02); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.04);">
+                        <label style="font-weight:700; color:#fff; display:block; margin-bottom:8px;">${plan.plan_name}</label>
+                        <div class="form-group" style="margin:0;">
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <div style="position:relative; flex:1;">
+                                    <input type="number" step="0.1" value="${plan.discount_percent}" 
+                                        oninput="updateOfferPercent(${plan.id}, this.value)" 
+                                        style="width:100%;" placeholder="0.0">
+                                    <span style="position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--text-dim);">%</span>
+                                </div>
+                                <div style="min-width:100px; padding:10px; background:rgba(34, 197, 94, 0.1); border-radius:8px; text-align:center;">
+                                    <div style="font-size:0.65rem; color:#4ade80; text-transform:uppercase; font-weight:700;">Total Deduction</div>
+                                    <div id="total-offer-${plan.id}" style="color:#fff; font-weight:700; font-size:1.1rem;">${total}%</div>
+                                </div>
+                            </div>
+                            <p style="font-size:0.7rem; color:var(--text-dim); margin-top:6px;">Setting: ${plan.discount_percent}% + 1.5% (Points Reward)</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateOfferPercent(planId, val) {
+            const plan = currentOffers.find(p => p.id === planId);
+            if (plan) {
+                plan.discount_percent = val || 0;
+                const total = (parseFloat(plan.discount_percent) + 1.5).toFixed(2);
+                document.getElementById(`total-offer-${planId}`).textContent = `${total}%`;
+                // Update the helper text too
+                const parent = document.getElementById(`total-offer-${planId}`).closest('.form-group');
+                parent.querySelector('p').textContent = `Setting: ${plan.discount_percent}% + 1.5% (Points Reward)`;
+            }
+        }
+
+        async function saveExclusiveOffers() {
+            try {
+                const res = await fetch(`../admin_API/save_merchant_exclusive_offers.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        merchant_id: merchantId,
+                        offers: currentOffers
+                    })
+                });
+                const json = await res.json();
+                if (json.status === 'success') {
+                    alert('Exclusive offers updated successfully!');
+                } else {
+                    alert('Server Error: ' + json.message);
+                }
+            } catch(e) {
+                console.error('Update Error:', e);
+                alert('Connection Error: ' + e.message);
+            }
+        }
+
+        async function loadMerchantInfo() {
+            try {
+                const res = await fetch(`../admin_API/get_merchant_detail.php?id=${merchantId}`);
+                const json = await res.json();
+                if (json.status === 'success') {
+                    document.getElementById('merchant-name').textContent = `${json.data.store_name} Inventory`;
+                    document.getElementById('merchant-code').textContent = `Merchant Code: ${json.data.merchant_code}`;
+                }
+            } catch(e) {}
+        }
+
+        async function loadCategoryTabs() {
+            try {
+                const res = await fetch(`../admin_API/get_merchant_categories.php?merchant_id=${merchantId}`);
+                const json = await res.json();
+                const tabsBar = document.getElementById('categories-tabs');
+                if (json.status === 'success' && json.data.length > 0) {
+                    json.data.forEach(cat => {
+                        const tab = document.createElement('div');
+                        tab.className = 'tab-item';
+                        tab.textContent = cat.name;
+                        tab.onclick = () => switchCategory(cat.id, tab);
+                        tabsBar.appendChild(tab);
+                    });
+                }
+            } catch(e) {}
+        }
+
+        function switchCategory(catId, element) {
+            selectedShopCatId = catId;
+            document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+            element.classList.add('active');
+            loadProducts();
+        }
+
+        async function loadProducts() {
+            const container = document.getElementById('products-table-container');
+            try {
+                const url = `../admin_API/get_merchant_products.php?merchant_id=${merchantId}${selectedShopCatId ? `&shop_category_id=${selectedShopCatId}` : ''}`;
+                const res = await fetch(url);
+                const json = await res.json();
+
+                if (json.status !== 'success') {
+                    container.innerHTML = `<div style="padding:60px; text-align:center; color:#f87171;">${json.message}</div>`;
+                    return;
+                }
+
+                if (json.data.length === 0) {
+                    container.innerHTML = `
+                        <div style="padding:100px 40px; text-align:center;">
+                            <ion-icon name="cart-outline" style="font-size:64px; color:rgba(255,255,255,0.1); margin-bottom:20px;"></ion-icon>
+                            <h3 style="color:var(--text-dim);">No Products Found</h3>
+                            <p style="color:rgba(255,255,255,0.4); margin-top:8px;">No listings found in this category.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = `
+                    <table class="prod-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Pridens SKU</th>
+                                <th>Seller SKU</th>
+                                <th>Platform Cat</th>
+                                <th>Base Price</th>
+                                <th>Total Stock</th>
+                                <th>Status</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                let currentCatName = '';
+
+                json.data.forEach(p => {
+                    // Visual Segregation by Shop Category (only if "All" is selected)
+                    if (selectedShopCatId === 0 && p.shop_category_name !== currentCatName) {
+                        currentCatName = p.shop_category_name || 'Uncategorized';
+                        html += `<tr><td colspan="7" class="cat-separator"><ion-icon name="folder-open-outline" style="vertical-align:middle; margin-right:8px;"></ion-icon> ${currentCatName}</td></tr>`;
+                    }
+
+                    const img = p.display_image ? `../admin_API/${p.display_image}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=random&color=fff&bold=true`;
+                    
+                    // Logic to prefer variant data if variations are enabled
+                    const stock = (p.has_variations == 1 && p.var_total_stock !== null) ? parseInt(p.var_total_stock) : parseInt(p.stock_quantity);
+                    const minPrice = (p.has_variations == 1 && p.var_min_price !== null) ? parseFloat(p.var_min_price) : parseFloat(p.price);
+                    const maxPrice = (p.has_variations == 1 && p.var_max_price !== null) ? parseFloat(p.var_max_price) : parseFloat(p.price);
+                    
+                    const isLow = stock < 5;
+                    let priceStr = minPrice.toLocaleString();
+                    if (minPrice !== maxPrice) {
+                        priceStr = `${minPrice.toLocaleString()} - ${maxPrice.toLocaleString()}`;
+                    }
+                    
+                    html += `
+                        <tr>
+                            <td style="display:flex; align-items:center; gap:16px;">
+                                <img src="${img}" class="prod-img">
+                                <div>
+                                    <div style="font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
+                                        ${p.name}
+                                        ${p.is_exclusive == 1 ? '<span class="status-pill" style="background:rgba(99, 102, 241, 0.2); color:#a5b4fc; border:1px solid rgba(165, 180, 252, 0.3); font-size:0.6rem;"><ion-icon name="star" style="vertical-align:middle;"></ion-icon> EXCLUSIVE</span>' : ''}
+                                        ${p.is_available == 0 ? '<span class="status-pill" style="background:rgba(239, 68, 68, 0.2); color:#f87171; font-size:0.6rem;">Unavailable</span>' : ''}
+                                        ${p.is_preorder == 1 ? `<span class="status-pill" style="background:rgba(234, 179, 8, 0.2); color:#fde047; font-size:0.6rem;">Pre-order (${p.preorder_days}d)</span>` : ''}
+                                    </div>
+                                    <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">${p.brand || 'No Brand'}</div>
+                                </div>
+                            </td>
+                            <td style="font-family:monospace; color:#818cf8; font-weight:700; font-size:0.8rem;">${p.pridens_sku || 'N/A'}</td>
+                            <td style="font-family:monospace; color:var(--text-dim); font-size:0.8rem;">${p.seller_sku || '-'}</td>
+                            <td><span style="background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:6px; font-size:0.85rem;">${p.category}</span></td>
+                            <td><span class="price-badge">₱${priceStr}</span></td>
+                            <td>
+                                <span class="stock-badge ${isLow ? 'stock-low' : 'stock-ok'}">
+                                    ${stock} in stock
+                                </span>
+                            </td>
+                            <td><span class="status-pill st-${p.status.toLowerCase()}">${p.status}</span></td>
+                            <td style="text-align:right;">
+                                <a href="merchant_product_editor.html?merchant_id=${merchantId}&p_id=${p.id}" class="btn-action btn-edit" title="Edit Listing">
+                                    <ion-icon name="create-outline"></ion-icon>
+                                </a>
+                                <button onclick="deleteProduct(${p.id})" class="btn-action btn-delete" title="Delete Listing">
+                                    <ion-icon name="trash-outline"></ion-icon>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += '</tbody></table>';
+                container.innerHTML = html;
+
+            } catch(e) {
+                container.innerHTML = '<div style="padding:60px; text-align:center; color:#f87171;">Failed to connect to marketplace.</div>';
+            }
+        }
+
+        async function deleteProduct(id) {
+            if (!confirm('Are you sure you want to permanently remove this listing from the marketplace?')) return;
+            try {
+                const res = await fetch('../admin_API/delete_merchant_product.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                const json = await res.json();
+                if (json.status === 'success') {
+                    loadProducts();
+                } else { alert(json.message); }
+            } catch(e) { alert('Network Error'); }
+        }
+    </script>
+</body>
+</html>

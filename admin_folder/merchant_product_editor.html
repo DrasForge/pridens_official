@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Product Editor - Seller Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Premium Editor & Icons -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        :root { --shopee-orange: #ee4d2d; --glass-bg: rgba(255, 255, 255, 0.03); }
+        .seller-card { background: var(--glass-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; padding: 28px; margin-bottom: 24px; transition: all 0.3s; }
+        .seller-card:hover { border-color: rgba(99, 102, 241, 0.3); box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .section-header ion-icon { font-size: 1.4rem; color: #6366f1; }
+        .section-header h2 { font-size: 1.15rem; margin: 0; font-weight: 700; letter-spacing: 0.5px; }
+
+        /* Form Layouts */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-group label { font-size: 0.75rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+        .form-group input, .form-group select, .form-group textarea { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 14px; color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.95rem; transition: all 0.2s; }
+        .form-group input:focus, .form-group select:focus { border-color: #6366f1; outline: none; background: rgba(255,255,255,0.08); }
+        
+        /* Quill Override */
+        .ql-toolbar { background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.1) !important; border-top-left-radius: 12px; border-top-right-radius: 12px; }
+        .ql-container { background: rgba(255,255,255,0.03) !important; border: 1px solid rgba(255,255,255,0.1) !important; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; height: 300px; color: #fff; font-family: 'Outfit', sans-serif; }
+        .ql-snow.ql-toolbar button .ql-stroke { stroke: #fff; }
+        .ql-snow.ql-toolbar button .ql-fill { fill: #fff; }
+
+        /* Media Rendering */
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px; margin-top: 12px; }
+        .image-slot { aspect-ratio: 1; border-radius: 16px; border: 2px dashed rgba(255,255,255,0.1); position: relative; overflow: hidden; background: rgba(255,255,255,0.03); transition: all 0.2s; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-direction: column; gap: 8px; }
+        .image-slot.video-slot { border-color: #6366f1; background: rgba(99,102,241,0.05); }
+        .image-slot img, .image-slot video { width:100%; height:100%; object-fit:cover; }
+        .slot-remove { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; background: #ef4444; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; z-index: 10; cursor: pointer; }
+
+        /* Inclusions Tags */
+        .inclusion-tag { display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.05); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; margin: 4px; }
+        .inclusion-tag ion-icon { cursor: pointer; color: #f87171; transition: 0.2s; }
+
+        /* Variations Builder */
+        .variation-box { background: rgba(0,0,0,0.15); border-radius: 16px; padding: 20px; border: 1px dashed rgba(255,255,255,0.1); margin-bottom: 16px; position: relative; }
+        .remove-tier { position: absolute; top: 12px; right: 12px; color: #f87171; cursor: pointer; }
+        .option-tag { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 8px; margin: 4px; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.05); }
+        .option-thumb { width: 28px; height: 28px; border-radius: 6px; object-fit: cover; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); }
+        
+        .matrix-container { overflow-x: auto; margin-top: 24px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); }
+        .matrix-table { width: 100%; border-collapse: collapse; background: rgba(0,0,0,0.1); }
+        .matrix-table th { background: rgba(255,255,255,0.02); text-align: left; padding: 12px; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .matrix-table td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+        .matrix-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px; color: #fff; width: 100px; font-family: inherit; }
+
+        .sticky-footer { position: sticky; bottom: 0; background: #0f172a; padding: 20px 32px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 16px; align-items: center; justify-content: flex-end; z-index: 100; box-shadow: 0 -10px 30px rgba(0,0,0,0.3); }
+        .btn-publish { background: #6366f1; color: #fff; padding: 14px 40px; border-radius: 12px; font-weight: 700; border: none; cursor: pointer; transition: 0.2s; }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <button class="menu-btn" id="open-sidebar"><ion-icon name="menu-outline"></ion-icon></button>
+                <div class="header-profile"><div class="avatar"><img src="https://ui-avatars.com/api/?name=Seller&background=ee4d2d&color=fff" alt="Seller"></div></div>
+            </header>
+
+            <div class="dashboard-content" style="padding-bottom: 120px;">
+                <div style="margin-bottom:32px;">
+                    <a href="#" id="back-link" style="color:var(--text-dim); text-decoration:none; font-size:0.9rem; display:flex; align-items:center; gap:6px; margin-bottom:8px;"><ion-icon name="arrow-back-outline"></ion-icon> Back to Products</a>
+                    <h1 id="page-title">Listing Editor</h1>
+                </div>
+
+                <form id="listing-form">
+                    <input type="hidden" id="p-id" name="id">
+                    <input type="hidden" id="p-merchant-id" name="merchant_id">
+
+                    <!-- Basic -->
+                    <div class="seller-card">
+                        <div class="section-header"><ion-icon name="information-circle-outline"></ion-icon><h2>Basic Information</h2></div>
+                        <div class="form-group"><label>Product Name</label><input type="text" name="name" id="p-name" required></div>
+                        <div class="form-grid" style="margin-top:20px;">
+                            <div class="form-group"><label>Category</label><select name="category" id="p-category"><option value="Products">Products</option><option value="Foods">Foods</option><option value="Services">Services</option><option value="Spots">Spots</option></select></div>
+                            <div class="form-group"><label>Shop Category</label><select name="custom_category_id" id="p-custom-category"><option value="">-- None --</option></select></div>
+                            <div class="form-group"><label>Brand</label><input type="text" name="brand" id="p-brand"></div>
+                        </div>
+                        <div class="form-grid" style="margin-top:20px;">
+                            <div class="form-group"><label>Pridens SKU</label><input type="text" id="p-pridens-sku" readonly placeholder="Auto-generated"></div>
+                            <div class="form-group"><label>Seller SKU</label><input type="text" name="seller_sku" id="p-seller-sku"></div>
+                        </div>
+                        <div class="form-group" style="margin-top:24px;"><label>Description (Rich Editor)</label><div id="p-desc-editor"></div><input type="hidden" name="description" id="p-desc"></div>
+                    </div>
+
+                    <!-- Media -->
+                    <div class="seller-card">
+                        <div class="section-header"><ion-icon name="images-outline"></ion-icon><h2>Gallery & Video</h2></div>
+                        <div class="gallery-grid">
+                            <div id="video-slot" class="image-slot video-slot" onclick="document.getElementById('video-input').click()"><ion-icon name="play-circle-outline" style="font-size:2rem;"></ion-icon><span style="font-size:0.7rem;">ADD VIDEO</span></div>
+                            <div id="gallery-container" style="display:contents;"></div>
+                        </div>
+                        <input type="file" id="video-input" name="video" accept="video/*" style="display:none;" onchange="handleNewVideo(this)">
+                        <input type="file" id="gallery-input" accept="image/*" multiple style="display:none;" onchange="handleNewFiles(this)">
+                        <input type="hidden" id="existing-video" name="existing_video">
+                    </div>
+
+                    <!-- Variations Builder (RESTORED FULLY) -->
+                    <div class="seller-card">
+                        <div class="section-header"><ion-icon name="pricetags-outline"></ion-icon><h2>Sales & Variations</h2></div>
+                        <div class="form-group" style="margin-bottom: 24px;">
+                            <label style="display:flex; align-items:center; gap:12px; cursor:pointer;">
+                                <input type="checkbox" id="enable-variations" name="has_variations" value="1" style="width:20px; height:20px;">
+                                <span style="font-size:1rem; color:#fff; font-weight:700;">Enable Multiple Variations</span>
+                            </label>
+                        </div>
+
+                        <div id="standard-pricing" class="form-grid">
+                            <div class="form-group"><label>Base Price (₱)</label><input type="number" step="0.01" name="price" id="p-price" value="0.00"></div>
+                            <div class="form-group"><label>Total Stock</label><input type="number" name="stock_quantity" id="p-stock" value="0"></div>
+                        </div>
+
+                        <div id="variations-builder" style="display:none; margin-top:20px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                                <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:0;">Variation Settings (Up to 2 Tiers)</p>
+                                <button type="button" class="btn-publish" onclick="addTier()" id="add-tier-btn" style="background:rgba(255,255,255,0.05); color:#fff; padding:8px 16px; font-size:0.8rem;">+ Add Tier</button>
+                            </div>
+                            
+                            <div id="tiers-container"></div>
+
+                            <!-- Batch Edit Tool -->
+                            <div id="batch-edit-tool" style="display:none; background:rgba(99, 102, 241, 0.05); border:1px solid rgba(99, 102, 241, 0.2); padding:15px; border-radius:12px; margin-top:20px; margin-bottom:30px;">
+                                <p style="font-size:0.75rem; color:#818cf8; font-weight:700; text-transform:uppercase; margin-bottom:12px;">Batch Edit Toolbar</p>
+                                <div style="display:flex; gap:10px; align-items:flex-end;">
+                                    <div class="form-group" style="margin-bottom:0; flex:1;"><label style="font-size:0.7rem;">Price</label><input type="number" step="0.01" id="batch-price" placeholder="₱ 0.00"></div>
+                                    <div class="form-group" style="margin-bottom:0; flex:1;"><label style="font-size:0.7rem;">Stock</label><input type="number" id="batch-stock" placeholder="Qty"></div>
+                                    <div class="form-group" style="margin-bottom:0; flex:1;"><label style="font-size:0.7rem;">SKU Prefix</label><input type="text" id="batch-sku" placeholder="ABC"></div>
+                                    <button type="button" class="btn-publish" onclick="applyBatchEdit()" style="padding:12px 20px;">Apply to All</button>
+                                </div>
+                            </div>
+
+                            <div id="variation-matrix-section" style="display:none; margin-top:20px;">
+                                <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:12px;">Generated Variation Combinations</p>
+                                <div style="border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,0.05);">
+                                    <table class="matrix-table" style="width:100%; border-collapse:collapse;">
+                                        <thead id="matrix-head" style="background:rgba(255,255,255,0.03); font-size:0.8rem; text-align:left;"></thead>
+                                        <tbody id="matrix-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Availability & Fulfillment -->
+                    <div class="seller-card">
+                        <div class="section-header"><ion-icon name="timer-outline"></ion-icon><h2>Fulfillment & Status</h2></div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label style="display:flex; align-items:center; gap:12px; cursor:pointer;">
+                                    <input type="checkbox" name="is_available" id="p-is-available" value="1" checked style="width:20px; height:20px;">
+                                    <span style="font-size:1rem; color:#fff; font-weight:700;">Currently Available</span>
+                                </label>
+                                <p style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Uncheck to mark as "Sold Out" or "Unavailable" without deleting the listing.</p>
+                            </div>
+                            <div class="form-group">
+                                <label style="display:flex; align-items:center; gap:12px; cursor:pointer;">
+                                    <input type="checkbox" name="is_preorder" id="p-is-preorder" value="1" style="width:20px; height:20px;" onchange="togglePreorderDays(this.checked)">
+                                    <span style="font-size:1rem; color:#fff; font-weight:700;">Pre-order Item</span>
+                                </label>
+                            </div>
+                            <div class="form-group" id="preorder-days-container" style="display:none;">
+                                <label>Lead Time (Days to ship)</label>
+                                <input type="number" name="preorder_days" id="p-preorder-days" value="7" min="1" max="30">
+                            </div>
+                            <div class="form-group" style="border-top:1px solid rgba(255,255,255,0.05); padding-top:16px;">
+                                <label style="display:flex; align-items:center; gap:12px; cursor:pointer;">
+                                    <input type="checkbox" name="is_exclusive" id="p-is-exclusive" value="1" style="width:20px; height:20px;">
+                                    <span style="font-size:1rem; color:#818cf8; font-weight:700;">Pridens Exclusive Offer</span>
+                                </label>
+                                <p style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Enable this to allow Pridens Subscribers to purchase this product at the exclusive discounted price set in your shop settings.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Logistics & Inclusions -->
+                    <div class="seller-card">
+                        <div class="section-header"><ion-icon name="bus-outline"></ion-icon><h2>Logistics & Inclusions</h2></div>
+                        <div class="form-grid">
+                            <div class="form-group"><label>Weight (g)</label><input type="number" name="weight_g" id="p-weight" value="0"></div>
+                            <div class="form-group"><label>Dimensions (cm)</label><div style="display:flex;gap:8px;"><input type="number" name="length_cm" id="p-length" placeholder="L"><input type="number" name="width_cm" id="p-width" placeholder="W"><input type="number" name="height_cm" id="p-height" placeholder="H"></div></div>
+                        </div>
+                        <div style="margin-top:24px; padding-top:24px; border-top:1px solid rgba(255,255,255,0.05);">
+                            <label style="font-size:0.75rem; font-weight:700; color:var(--text-dim); text-transform:uppercase;">Inclusions List</label>
+                            <div style="display:flex; gap:12px; margin-top:12px;"><input type="text" id="inclusion-input" placeholder="e.g. 1x Manual" style="flex:1;"><button type="button" onclick="addInclusion()" class="btn-publish" style="padding:10px 20px;">Add</button></div>
+                            <div id="inclusions-list" style="margin-top:12px; display:flex; flex-wrap:wrap;"></div>
+                            <input type="hidden" name="inclusions_data" id="p-inclusions-data">
+                        </div>
+                    </div>
+
+                    <!-- Shipping & Payments -->
+                    <div class="seller-card">
+                        <div class="section-header"><ion-icon name="card-outline"></ion-icon><h2>Shipping & Payments</h2></div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Shipping Options</label>
+                                <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
+                                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.9rem;">
+                                        <input type="checkbox" name="allow_local_deliv" id="p-allow-local" value="1" checked> Local Delivery
+                                    </label>
+                                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.9rem;">
+                                        <input type="checkbox" name="allow_nationwide_deliv" id="p-allow-nationwide" value="1" checked> Nationwide Delivery
+                                    </label>
+                                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.9rem;">
+                                        <input type="checkbox" name="allow_pickup" id="p-allow-pickup" value="1"> Pick-up (Nearby)
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Direct Payment Methods</label>
+                                <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
+                                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.9rem; color:#818cf8; font-weight:700;">
+                                        <input type="checkbox" name="allow_direct_payment" id="p-allow-direct" value="1"> Enable Direct Payment
+                                    </label>
+                                    <p style="font-size:0.75rem; color:var(--text-dim);">When enabled, buyers can pay directly to your registered Bank/E-Wallet channels (set in Shop Settings).</p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Payment Options</label>
+                                <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
+                                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.9rem;">
+                                        <input type="checkbox" name="allow_cod" id="p-allow-cod" value="1" checked> Cash on Delivery (COD)
+                                    </label>
+                                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.9rem;">
+                                        <input type="checkbox" name="allow_bank" id="p-allow-bank" value="1" checked> Bank Transfer
+                                    </label>
+                                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.9rem;">
+                                        <input type="checkbox" name="allow_ewallet" id="p-allow-ewallet" value="1" checked> E-Wallet (GCash/Maya)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sticky-footer">
+                        <button type="button" onclick="goBack()" style="background:transparent; color:#fff; border:none; cursor:pointer;">Discard</button>
+                        <button type="submit" class="btn-publish">Save and Publish Product</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Hidden helper for option pics -->
+    <input type="file" id="opt-img-input" accept="image/*" style="display:none;" onchange="handleOptionImage(this)">
+
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script src="js/marketplace-sidebar.js"></script>
+    <script>
+        const quill = new Quill('#p-desc-editor', { theme: 'snow', modules: { toolbar: [['bold', 'italic'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['image', 'clean']] } });
+        const urlParams = new URLSearchParams(window.location.search);
+        const merchantId = urlParams.get('merchant_id') || urlParams.get('id');
+        const productId = urlParams.get('p_id');
+
+        let tiers = []; let inclusions = []; let existingGallery = []; let newFiles = []; let removedIds = []; let newVideo = null;
+        let activeOptRef = { tIdx: -1, oIdx: -1 };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!merchantId) { window.location.href='merchants.html'; return; }
+            document.getElementById('p-merchant-id').value = merchantId;
+            document.getElementById('back-link').href = `merchant_products.html?id=${merchantId}`;
+            loadShopCategories();
+            if (productId) loadListingDetails(productId); else renderGallery();
+            initVariationToggles();
+        });
+
+        async function loadShopCategories() {
+            try {
+                const res = await fetch(`../admin_API/get_merchant_categories.php?merchant_id=${merchantId}`);
+                const json = await res.json();
+                if (json.status === 'success') json.data.forEach(cat => { document.getElementById('p-custom-category').add(new Option(cat.name, cat.id)); });
+            } catch(e) {}
+        }
+
+        async function loadListingDetails(id) {
+            try {
+                const res = await fetch(`../admin_API/get_merchant_product_detail.php?id=${id}`);
+                const json = await res.json();
+                if (json.status === 'success') {
+                    const p = json.data;
+                    document.getElementById('p-id').value = p.id;
+                    document.getElementById('p-name').value = p.name;
+                    document.getElementById('p-brand').value = p.brand;
+                    quill.root.innerHTML = p.description || '';
+                    document.getElementById('p-category').value = p.category;
+                    document.getElementById('p-custom-category').value = p.custom_category_id || '';
+                    document.getElementById('p-pridens-sku').value = p.pridens_sku || '';
+                    document.getElementById('p-seller-sku').value = p.seller_sku || '';
+                    document.getElementById('p-price').value = p.price;
+                    document.getElementById('p-stock').value = p.stock_quantity;
+                    document.getElementById('p-weight').value = p.weight_g;
+                    document.getElementById('p-length').value = p.length_cm;
+                    document.getElementById('p-width').value = p.width_cm;
+                    document.getElementById('p-height').value = p.height_cm;
+                    
+                    // Shipping/Payments Settings
+                    document.getElementById('p-allow-local').checked = p.allow_local_deliv == 1;
+                    document.getElementById('p-allow-nationwide').checked = p.allow_nationwide_deliv == 1;
+                    document.getElementById('p-allow-pickup').checked = p.allow_pickup == 1;
+                    document.getElementById('p-allow-direct').checked = p.allow_direct_payment == 1;
+                    document.getElementById('p-allow-cod').checked = p.allow_cod == 1;
+                    document.getElementById('p-allow-bank').checked = p.allow_bank == 1;
+                    document.getElementById('p-allow-ewallet').checked = p.allow_ewallet == 1;
+
+                    document.getElementById('p-is-available').checked = p.is_available == 1;
+                    document.getElementById('p-is-preorder').checked = p.is_preorder == 1;
+                    document.getElementById('p-is-exclusive').checked = p.is_exclusive == 1;
+                    document.getElementById('p-preorder-days').value = p.preorder_days || 7;
+                    togglePreorderDays(p.is_preorder == 1);
+                    
+                    if (p.inclusions) { try { inclusions = JSON.parse(p.inclusions); } catch(e) {} renderInclusions(); }
+                    if (p.video_path) { document.getElementById('existing-video').value = p.video_path; renderVideoPreview(p.video_path); }
+                    
+                    existingGallery = [];
+                    if (p.image_path) existingGallery.push({ id: 0, path: p.image_path });
+                    if (p.images) p.images.forEach(img => existingGallery.push({ id: img.id, path: img.image_path }));
+                    renderGallery();
+
+                    if (p.has_variations == 1) {
+                        document.getElementById('enable-variations').checked = true;
+                        document.getElementById('enable-variations').dispatchEvent(new Event('change'));
+                        tiers = (p.variation_tiers || []).map(t => ({ 
+                            name: t.name, 
+                            options: t.options.map(o => ({ 
+                                name: o.name, 
+                                existing_image: o.image_path 
+                            })) 
+                        }));
+                        renderTiers();
+                        // Delay matrix populating until generated
+                        setTimeout(() => {
+                            p.models.forEach(m => {
+                                const row = document.querySelector(`tr[data-key="${m.variation_key}"]`);
+                                if (row) {
+                                    row.querySelector('.m-price').value = m.price;
+                                    row.querySelector('.m-stock').value = m.stock;
+                                    row.querySelector('.m-seller-sku').value = m.seller_sku || '';
+                                    row.querySelector('.m-pridens-sku').value = m.pridens_sku || '';
+                                }
+                            });
+                        }, 500);
+                    }
+                }
+            } catch(e) {}
+        }
+
+        // Variation Logic
+        function initVariationToggles() {
+            document.getElementById('enable-variations').addEventListener('change', (e) => {
+                const en = e.target.checked;
+                document.getElementById('standard-pricing').style.display = en ? 'none' : 'grid';
+                document.getElementById('variations-builder').style.display = en ? 'block' : 'none';
+                if (en && tiers.length === 0) addTier();
+            });
+        }
+        function togglePreorderDays(isEn) {
+            document.getElementById('preorder-days-container').style.display = isEn ? 'block' : 'none';
+        }
+        function addTier() { 
+            if (tiers.length < 2) { 
+                tiers.push({ name: '', options: [] }); 
+                renderTiers(); 
+            } 
+            if (tiers.length >= 2) document.getElementById('add-tier-btn').style.display = 'none';
+        }
+        function removeTier(i) { 
+            tiers.splice(i, 1); 
+            document.getElementById('add-tier-btn').style.display = 'block';
+            renderTiers(); 
+        }
+        function addOption(i) { const inp = document.getElementById(`opt-inp-${i}`); if (inp.value.trim()) { tiers[i].options.push({ name: inp.value.trim(), file: null }); inp.value = ''; renderTiers(); } }
+        function removeOption(ti, oi) { tiers[ti].options.splice(oi, 1); renderTiers(); }
+        
+        function triggerOptionImage(ti, oi) { activeOptRef = { tIdx: ti, oIdx: oi }; document.getElementById('opt-img-input').click(); }
+        function handleOptionImage(input) {
+            if (input.files && input.files[0]) {
+                const { tIdx, oIdx } = activeOptRef;
+                tiers[tIdx].options[oIdx].file = input.files[0];
+                renderTiers();
+            }
+        }
+
+        function renderTiers() {
+            const cont = document.getElementById('tiers-container');
+            cont.innerHTML = tiers.map((t, i) => `
+                <div class="variation-box">
+                    <ion-icon name="close-circle-outline" class="remove-tier" onclick="removeTier(${i})" style="font-size:1.4rem;"></ion-icon>
+                    <div class="form-grid" style="grid-template-columns: 1fr 1fr auto;">
+                        <div class="form-group"><label>Variation Type</label><input type="text" value="${t.name}" oninput="tiers[${i}].name=this.value;generateMatrix();" placeholder="e.g. Color"></div>
+                        <div class="form-group"><label>Add Option</label><input type="text" id="opt-inp-${i}" placeholder="e.g. Red" onkeydown="if(event.key==='Enter'){event.preventDefault();addOption(${i});}"></div>
+                        <div style="display:flex; align-items:flex-end;"><button type="button" onclick="addOption(${i})" class="btn-publish" style="padding:12px;">Add</button></div>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; margin-top:16px;">
+                        ${t.options.map((o, oi) => `
+                            <div class="option-tag">
+                                <img src="${o.file ? URL.createObjectURL(o.file) : (o.existing_image ? '../admin_API/'+o.existing_image : 'https://placehold.co/100x100?text=Scan')}" class="option-thumb" onclick="triggerOptionImage(${i},${oi})">
+                                <span>${o.name}</span>
+                                <ion-icon name="close" onclick="removeOption(${i},${oi})"></ion-icon>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+            generateMatrix();
+        }
+
+        function generateMatrix() {
+            const vt = tiers.filter(t => t.options.length > 0);
+            if (vt.length === 0) { 
+                document.getElementById('variation-matrix-section').style.display='none'; 
+                document.getElementById('batch-edit-tool').style.display='none';
+                return; 
+            }
+            document.getElementById('variation-matrix-section').style.display='block';
+            document.getElementById('batch-edit-tool').style.display='block';
+            
+            const head = document.getElementById('matrix-head');
+            const body = document.getElementById('matrix-body');
+            head.innerHTML = `<tr>${vt.map(t => `<th style="padding:15px; border-bottom:1px solid rgba(255,255,255,0.05);">${t.name}</th>`).join('')}<th style="padding:15px; border-bottom:1px solid rgba(255,255,255,0.05);">Price</th><th style="padding:15px; border-bottom:1px solid rgba(255,255,255,0.05);">Stock</th><th style="padding:15px; border-bottom:1px solid rgba(255,255,255,0.05);">Seller SKU</th></tr>`;
+            
+            let combinations = [];
+            function combine(idx, currentPath, currentKey) {
+                if (idx === vt.length) { combinations.push({ names: currentPath, key: currentKey.join('-') }); return; }
+                vt[idx].options.forEach((opt, oi) => combine(idx + 1, [...currentPath, opt.name], [...currentKey, oi]));
+            }
+            combine(0, [], []);
+
+            body.innerHTML = combinations.map((c, cIdx) => {
+                let rowHTML = `<tr data-key="${c.key}" data-name="${c.names.join(', ')}" style="border-bottom:1px solid rgba(255,255,255,0.02);">`;
+                
+                // Tier 1 row-spanning logic if we have 2 tiers
+                if (vt.length === 2 && cIdx % vt[1].options.length === 0) {
+                    rowHTML += `<td rowspan="${vt[1].options.length}" style="padding:15px; border-right:1px solid rgba(255,255,255,0.02); font-weight:600; color:#fff;">${c.names[0]}</td>`;
+                    rowHTML += `<td style="padding:15px; color:var(--text-dim);">${c.names[1]}</td>`;
+                } else if (vt.length === 2) {
+                    rowHTML += `<td style="padding:15px; color:var(--text-dim);">${c.names[1]}</td>`;
+                } else {
+                    rowHTML += `<td style="padding:15px; font-weight:600; color:#fff;">${c.names[0]}</td>`;
+                }
+
+                rowHTML += `
+                    <td style="padding:10px;"><input type="number" step="0.01" class="m-price matrix-input" value="0.00" style="padding:8px;"></td>
+                    <td style="padding:10px;"><input type="number" class="m-stock matrix-input" value="0" style="padding:8px;"></td>
+                    <td style="padding:10px;"><input type="text" class="m-seller-sku matrix-input" placeholder="SKU" style="padding:8px;"></td>
+                    <input type="hidden" class="m-pridens-sku" value="">
+                </tr>`;
+                return rowHTML;
+            }).join('');
+        }
+
+        function applyBatchEdit() {
+            const price = document.getElementById('batch-price').value;
+            const stock = document.getElementById('batch-stock').value;
+            const sku = document.getElementById('batch-sku').value;
+            
+            if (price) document.querySelectorAll('.m-price').forEach(el => el.value = price);
+            if (stock) document.querySelectorAll('.m-stock').forEach(el => el.value = stock);
+            if (sku) {
+                document.querySelectorAll('tr[data-key]').forEach((row, i) => {
+                    row.querySelector('.m-seller-sku').value = `${sku}-${i+1}`;
+                });
+            }
+        }
+
+        // Logic for others
+        function renderVideoPreview(path, isLocal = false) {
+            const slot = document.getElementById('video-slot');
+            slot.innerHTML = `<div class="slot-remove" onclick="removeVideo(event)">&times;</div><video src="${isLocal ? path : '../admin_API/'+path}" autoplay muted loop></video>`;
+        }
+        function handleNewVideo(i) { if (i.files[0]) { newVideo = i.files[0]; renderVideoPreview(URL.createObjectURL(newVideo), true); } }
+        function removeVideo(e) { e.stopPropagation(); newVideo = null; document.getElementById('existing-video').value = ''; document.getElementById('video-slot').innerHTML = '<ion-icon name="play-circle-outline" style="font-size:2rem;"></ion-icon><span style="font-size:0.7rem;">ADD VIDEO</span>'; }
+
+        function renderGallery() {
+            const cont = document.getElementById('gallery-container'); cont.innerHTML = '';
+            existingGallery.forEach((img, idx) => {
+                const div = document.createElement('div'); div.className='image-slot';
+                div.innerHTML = `<div class="slot-remove" onclick="removeExisting(${idx}, event)">&times;</div><img src="../admin_API/${img.path}">`;
+                cont.appendChild(div);
+            });
+            newFiles.forEach((f, idx) => {
+                const div = document.createElement('div'); div.className='image-slot';
+                div.innerHTML = `<div class="slot-remove" onclick="removeNew(${idx}, event)">&times;</div><img src="${URL.createObjectURL(f)}">`;
+                cont.appendChild(div);
+            });
+            if (existingGallery.length + newFiles.length < 9) {
+                const add = document.createElement('div'); add.className='image-slot';
+                add.innerHTML = '<ion-icon name="add-outline"></ion-icon><span>IMAGE</span>';
+                add.onclick = () => document.getElementById('gallery-input').click();
+                cont.appendChild(add);
+            }
+        }
+        function handleNewFiles(i) { const rem = 9-(existingGallery.length+newFiles.length); for(let j=0; j<Math.min(i.files.length, rem); j++) newFiles.push(i.files[j]); renderGallery(); }
+        function removeExisting(i, e) { e.stopPropagation(); removedIds.push(existingGallery[i].id); existingGallery.splice(i,1); renderGallery(); }
+        function removeNew(i, e) { e.stopPropagation(); newFiles.splice(i,1); renderGallery(); }
+
+        function addInclusion() { const vi = document.getElementById('inclusion-input'); if(vi.value.trim()){ inclusions.push(vi.value.trim()); vi.value=''; renderInclusions(); } }
+        function removeInclusion(i) { inclusions.splice(i,1); renderInclusions(); }
+        function renderInclusions() {
+            document.getElementById('inclusions-list').innerHTML = inclusions.map((it, i) => `<div class="inclusion-tag"><span>${it}</span><ion-icon name="close-circle" onclick="removeInclusion(${i})"></ion-icon></div>`).join('');
+            document.getElementById('p-inclusions-data').value = JSON.stringify(inclusions);
+        }
+
+        function goBack() { window.history.back(); }
+
+        document.getElementById('listing-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            fd.set('description', quill.root.innerHTML);
+            if (newVideo) fd.append('video', newVideo);
+            if (document.getElementById('enable-variations').checked) {
+                fd.append('variations_data', JSON.stringify(tiers));
+                const models = [];
+                document.querySelectorAll('#matrix-body tr').forEach(tr => {
+                    models.push({
+                        name: tr.dataset.name,
+                        variation_key: tr.dataset.key,
+                        price: tr.querySelector('.m-price').value,
+                        stock: tr.querySelector('.m-stock').value,
+                        seller_sku: tr.querySelector('.m-seller-sku').value,
+                        pridens_sku: tr.querySelector('.m-pridens-sku').value
+                    });
+                });
+                fd.append('models_data', JSON.stringify(models));
+                // Add option images to FD as option_image_{tier}_{opt}
+                tiers.forEach((t, ti) => {
+                    t.options.forEach((o, oi) => {
+                        if (o.file) fd.append(`option_image_${ti}_${oi}`, o.file);
+                    });
+                });
+            }
+            fd.append('removed_image_ids', JSON.stringify(removedIds));
+            newFiles.forEach(f => fd.append('gallery[]', f));
+
+            try {
+                const res = await fetch('../admin_API/save_merchant_product.php', { method: 'POST', body: fd });
+                const json = await res.json();
+                if (json.status === 'success') goBack(); else alert(json.message);
+            } catch(ex) { console.error(ex); }
+        };
+    </script>
+</body>
+</html>

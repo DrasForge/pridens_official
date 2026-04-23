@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Plans - Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/subscription_plans.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-placeholder">A</div>
+                <h2>Admin Panel</h2>
+                <button class="mobile-toggle" id="close-sidebar">
+                    <ion-icon name="close-outline"></ion-icon>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">
+                    <ion-icon name="home-outline"></ion-icon>
+                    <span>Dashboard</span>
+                </a>
+                
+                <div class="nav-group">
+                    <div class="nav-item nav-item-has-children active" id="subscribers-menu-toggle">
+                        <div class="nav-item-icon-text">
+                            <ion-icon name="people-outline"></ion-icon>
+                            <span>Subscribers</span>
+                        </div>
+                        <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+                    </div>
+                    <ul class="sub-menu open" id="subscribers-submenu">
+                        <li><a href="accounts.html" class="sub-item">Accounts</a></li>
+                        <li><a href="insurance_approvals.html" class="sub-item">Insurance</a></li>
+                        <li><a href="subscription_plans.html" class="sub-item active">Subscription Plans</a></li>
+                        <li><a href="pvoucher_ledger.html" class="sub-item">P-Voucher Ledger</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-group">
+                    <div class="nav-item nav-item-has-children" id="pos-menu-toggle">
+                        <div class="nav-item-icon-text">
+                            <ion-icon name="cart-outline"></ion-icon>
+                            <span>POS Management</span>
+                        </div>
+                        <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+                    </div>
+                    <ul class="sub-menu" id="pos-submenu">
+                        <li><a href="../point_of_sale_folder/index.html" class="sub-item" target="_blank">POS Terminal</a></li>
+                        <li><a href="products.html" class="sub-item">Products</a></li>
+                        <li><a href="#" class="sub-item">Inventory</a></li>
+                        <li><a href="#" class="sub-item">Transactions</a></li>
+                        <li><a href="#" class="sub-item">Reports</a></li>
+                    </ul>
+                </div>
+                
+                <div class="nav-group">
+                    <div class="nav-item nav-item-has-children" id="agents-menu-toggle">
+                        <div class="nav-item-icon-text">
+                            <ion-icon name="briefcase-outline"></ion-icon>
+                            <span>Agents</span>
+                        </div>
+                        <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+                    </div>
+                    <ul class="sub-menu" id="agents-submenu">
+                        <li><a href="agent_accounts.html" class="sub-item">Manage Accounts</a></li>
+                        <li><a href="agent_ranks.html" class="sub-item">Ranks & Qualifications</a></li>
+                        <li><a href="agent_teams.html" class="sub-item">Manage Teams</a></li>
+                        <li><a href="agent_applications.html" class="sub-item">Applications</a></li>
+                        <li><a href="agent_app_forms.html" class="sub-item">App Forms</a></li>
+                        <li><a href="agent_commissions.html" class="sub-item">Commissions</a></li>
+                        <li><a href="agent_encashments.html" class="sub-item">Encashments</a></li>
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="#" class="nav-item" id="logout-btn">
+                    <ion-icon name="log-out-outline"></ion-icon>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-header">
+                <button class="menu-btn" id="open-sidebar">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </button>
+                <div class="header-search">
+                    <ion-icon name="search-outline"></ion-icon>
+                    <input type="text" placeholder="Search plans...">
+                </div>
+                <div class="header-profile">
+                    <a href="create_plan.html" class="btn-primary" style="padding: 10px 24px; text-decoration: none;">
+                        <span class="btn-text" style="display:flex; align-items:center; gap:8px;">
+                            <ion-icon name="add-circle-outline" style="font-size:20px;"></ion-icon> Create New Plan
+                        </span>
+                    </a>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <div class="welcome-banner">
+                    <h1>Subscription Plans</h1>
+                    <p>Configure product fees, commissions, and insurance benefits for your subscribers.</p>
+                </div>
+
+                <div class="plans-container" id="plansGrid">
+                    <!-- Loading State -->
+                    <div style="grid-column: 1/-1; text-align: center; padding: 60px;">
+                        <div class="loader" style="margin: 0 auto 20px;"></div>
+                        <p style="color: var(--text-muted)">Fetching available plans...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/dashboard.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', loadPlans);
+
+        async function loadPlans() {
+            const grid = document.getElementById('plansGrid');
+            try {
+                const response = await fetch('../admin_API/get_subscription_plans.php');
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.plans.length === 0) {
+                        grid.innerHTML = `
+                            <div style="grid-column: 1/-1; text-align: center; padding: 80px; background: var(--glass-bg); border-radius: 24px; border: 1px dashed var(--glass-border);">
+                                <ion-icon name="layers-outline" style="font-size: 48px; color: var(--text-muted); margin-bottom: 16px;"></ion-icon>
+                                <p style="color: var(--text-muted); font-size: 16px;">No plans found. Start by creating a new subscription plan.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    grid.innerHTML = data.plans.map(plan => {
+                        const theme = plan.card_theme || {};
+                        const bgColor = theme.bgColor || 'var(--primary-color)';
+                        const txtColor = theme.txtColor || '#fff';
+                        const opacity = (theme.opacity || 15) / 100;
+                        
+                        return `
+                        <div class="plan-card" style="border-top: 4px solid ${bgColor}">
+                            <div class="plan-header">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div class="theme-mini-preview" style="width:12px; height:12px; border-radius:3px; background:${bgColor}; box-shadow: 0 0 10px ${bgColor}44;"></div>
+                                    <div class="plan-title">${plan.plan_name}</div>
+                                </div>
+                                <span class="plan-badge">${plan.status}</span>
+                            </div>
+                            <div class="plan-info-row">
+                                <span><ion-icon name="shield-checkmark-outline"></ion-icon> ${plan.insurance_coverage}</span>
+                                <span><ion-icon name="calendar-outline"></ion-icon> ${plan.payment_terms}</span>
+                            </div>
+                            <div class="plan-stats-grid">
+                                <div class="stat-item">
+                                    <span>Plan Term</span>
+                                    <span>${plan.subscription_term_months} Mo</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Quota</span>
+                                    <span>${plan.quota_weight}x</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Commission</span>
+                                    <span>₱${Math.floor(plan.otc_l1).toLocaleString()}</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Monthly</span>
+                                    <span>₱${Math.floor(plan.monthly_pvoucher).toLocaleString()}</span>
+                                </div>
+                            </div>
+                            <div class="plan-actions">
+                                <a href="create_plan.html?id=${plan.id}" class="btn-action" title="Edit"><ion-icon name="create-outline"></ion-icon></a>
+                                <button class="btn-action" title="View Details"><ion-icon name="eye-outline"></ion-icon></button>
+                                <button class="btn-action" style="margin-left:auto; color: #ef4444;" title="Archive"><ion-icon name="archive-outline"></ion-icon></button>
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+                }
+            } catch (error) {
+                grid.innerHTML = '<p style="color: var(--error-color); text-align: center; grid-column: 1/-1;">Error loading plans. Please check connection.</p>';
+            }
+        }
+    </script>
+</body>
+</html>

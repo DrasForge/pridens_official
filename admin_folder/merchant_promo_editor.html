@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discount Promo Editor - Marketing Centre</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        :root { --glass-bg: rgba(255, 255, 255, 0.03); }
+        .editor-card { background: var(--glass-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; padding: 28px; margin-bottom: 24px; }
+        .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+        .section-header ion-icon { font-size: 1.4rem; color: #6366f1; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-group label { font-size: 0.75rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; }
+        .form-group input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 14px; color: #fff; font-family: inherit; }
+        
+        .product-selector { background: rgba(0,0,0,0.2); border-radius: 16px; border: 1px dashed rgba(255,255,255,0.1); padding: 32px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .product-selector:hover { border-color: #6366f1; background: rgba(99,102,241,0.05); }
+
+        .items-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+        .items-table th { text-align: left; padding: 12px; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; border-bottom: 2px solid rgba(255,255,255,0.05); }
+        .items-table td { padding: 16px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .item-row:hover { background: rgba(255,255,255,0.02); }
+        .price-input { width: 100px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px; color: #fff; font-size: 0.9rem; }
+        
+        .modal { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter: blur(8px); }
+        .modal-content { background:#0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius:24px; width:90%; max-width:800px; margin: 5vh auto; height:90vh; display:flex; flex-direction:column; }
+        .modal-header { padding:24px; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center; }
+        .modal-body { flex:1; overflow-y:auto; padding:24px; }
+        .modal-footer { padding:24px; border-top:1px solid rgba(255,255,255,0.05); text-align:right; }
+
+        .picker-item { display:flex; gap:16px; padding:16px; border-bottom:1px solid rgba(255,255,255,0.03); align-items:center; cursor:pointer; }
+        .picker-item:hover { background:rgba(255,255,255,0.03); }
+
+        .sticky-footer { position: sticky; bottom: 0; background: #0f172a; padding: 20px 32px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 16px; align-items: center; justify-content: flex-end; z-index: 100; }
+        .btn-primary { background: #6366f1; color: #fff; padding: 14px 40px; border-radius: 12px; font-weight: 700; border: none; cursor: pointer; }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <button class="menu-btn" id="open-sidebar"><ion-icon name="menu-outline"></ion-icon></button>
+            </header>
+
+            <div class="dashboard-content" style="padding-bottom: 100px;">
+                <div style="margin-bottom:32px;">
+                    <a href="#" id="back-link" style="color:var(--text-dim); text-decoration:none; font-size:0.9rem; display:flex; align-items:center; gap:6px; margin-bottom:8px;"><ion-icon name="arrow-back-outline"></ion-icon> Back to Marketing</a>
+                    <h1 id="page-title">Create Discount Promotion</h1>
+                </div>
+
+                <form id="promo-form">
+                    <input type="hidden" id="p-id" name="id">
+                    <input type="hidden" id="p-merchant-id" name="merchant_id">
+
+                    <div class="editor-card">
+                        <div class="section-header"><ion-icon name="rocket-outline"></ion-icon><h2>Campaign Details</h2></div>
+                        <div class="form-group" style="margin-bottom:24px;"><label>Promotion Name</label><input type="text" name="name" id="p-name" placeholder="e.g. Happy Hour Flash Sale" required></div>
+                        <div class="form-grid">
+                            <div class="form-group"><label>Start Date & Time</label><input type="datetime-local" name="start_time" id="p-start" required></div>
+                            <div class="form-group"><label>End Date & Time</label><input type="datetime-local" name="end_time" id="p-end" required></div>
+                        </div>
+                    </div>
+
+                    <div class="editor-card">
+                        <div class="section-header"><ion-icon name="cart-outline"></ion-icon><h2>Promotional Products</h2></div>
+                        <div id="product-selector" class="product-selector" onclick="openPicker()">
+                            <ion-icon name="add-circle-outline" style="font-size:2rem; color:#6366f1;"></ion-icon>
+                            <div style="font-weight:700; margin-top:12px;">Add Products to Promotion</div>
+                            <p style="color:var(--text-dim); font-size:0.85rem; margin-top:8px;">Select items and set their discounted prices.</p>
+                        </div>
+
+                        <table id="selected-items-table" class="items-table" style="display:none;">
+                            <thead>
+                                <tr>
+                                    <th>Product / Variation</th>
+                                    <th>Original Price</th>
+                                    <th>Promo Price</th>
+                                    <th>Discount (%)</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="selected-list"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="sticky-footer">
+                        <button type="button" onclick="window.history.back()" style="background:transparent; color:#fff; border:none; cursor:pointer;">Discard</button>
+                        <button type="submit" id="save-btn" class="btn-primary">Confirm and Save</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Product Picker Modal -->
+    <div id="picker-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Select Products</h2>
+                <ion-icon name="close" onclick="closePicker()" style="font-size:1.8rem; cursor:pointer;"></ion-icon>
+            </div>
+            <div id="picker-body" class="modal-body"></div>
+            <div class="modal-footer">
+                <button class="btn-primary" onclick="closePicker()">Done Selecting</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/marketplace-sidebar.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        // Resiliently catch merchant ID
+        const merchantId = urlParams.get('merchant_id') || urlParams.get('id');
+        const promoId    = urlParams.get('promo_id') || urlParams.get('id'); // Logic to differentiate if both are 'id'
+
+        let allProducts = [];
+        let selectedItems = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!merchantId) { 
+                alert("Missing Merchant ID! Returning to merchant list.");
+                window.location.href = 'merchants.html'; 
+                return; 
+            }
+            document.getElementById('p-merchant-id').value = merchantId;
+            document.getElementById('back-link').href = `merchant_marketing.html?id=${merchantId}`;
+            
+            loadEligibleProducts();
+        });
+
+        async function loadEligibleProducts() {
+            try {
+                const res = await fetch(`../admin_API/get_promo_eligible_products.php?merchant_id=${merchantId}`);
+                const json = await res.json();
+                if (json.status === 'success') {
+                    allProducts = json.data;
+                } else {
+                    console.error("Failed to load products:", json.message);
+                }
+            } catch (e) {
+                console.error("Error fetching products:", e);
+            }
+        }
+
+        function openPicker() {
+            const body = document.getElementById('picker-body');
+            body.innerHTML = '';
+            
+            if (allProducts.length === 0) {
+                body.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-dim);">No active products found for this merchant.</div>';
+            }
+
+            allProducts.forEach(p => {
+                if (p.has_variations && p.models && p.models.length > 0) {
+                    p.models.forEach(m => {
+                        renderPickerRow(p, m);
+                    });
+                } else {
+                    renderPickerRow(p, null);
+                }
+            });
+            document.getElementById('picker-modal').style.display = 'block';
+        }
+
+        function renderPickerRow(product, model) {
+            const body = document.getElementById('picker-body');
+            const div = document.createElement('div');
+            div.className = 'picker-item';
+            const uid = model ? `m_${model.id}` : `p_${product.id}`;
+            const isSelected = selectedItems.find(i => i.uid === uid);
+            
+            div.innerHTML = `
+                <div style="flex:1;">
+                    <div style="font-weight:600;">${product.name} ${model ? `(${model.name})` : ''}</div>
+                    <div style="font-size:0.8rem; color:var(--text-dim);">${model ? model.pridens_sku : product.pridens_sku}</div>
+                </div>
+                <div style="font-weight:700;">₱${model ? model.price : product.price}</div>
+                <button type="button" onclick="toggleItem('${uid}', event)" class="status-badge ${isSelected ? 'status-ongoing' : 'status-expired'}">${isSelected ? 'Added' : 'Add'}</button>
+            `;
+            body.appendChild(div);
+        }
+
+        function toggleItem(uid, event) {
+            event.stopPropagation();
+            const existingIdx = selectedItems.findIndex(i => i.uid === uid);
+            if (existingIdx > -1) {
+                selectedItems.splice(existingIdx, 1);
+            } else {
+                const [type, id] = uid.split('_');
+                if (type === 'p') {
+                    const found = allProducts.find(p => p.id == id);
+                    if (found) {
+                        selectedItems.push({ 
+                            uid, 
+                            product_id: parseInt(id), 
+                            model_id: null, 
+                            name: found.name, 
+                            price: parseFloat(found.price), 
+                            promo_price: parseFloat(found.price), 
+                            discount: 0 
+                        });
+                    }
+                } else {
+                    allProducts.forEach(p => {
+                        if (p.models) {
+                            const m = p.models.find(m => m.id == id);
+                            if (m) {
+                                selectedItems.push({ 
+                                    uid, 
+                                    product_id: parseInt(p.id), 
+                                    model_id: parseInt(id), 
+                                    name: `${p.name} (${m.name})`, 
+                                    price: parseFloat(m.price), 
+                                    promo_price: parseFloat(m.price), 
+                                    discount: 0 
+                                });
+                            }
+                        }
+                    });
+                }
+            }
+            openPicker(); 
+            renderSelectedTable();
+        }
+
+        function closePicker() { document.getElementById('picker-modal').style.display = 'none'; }
+
+        function renderSelectedTable() {
+            const table = document.getElementById('selected-items-table');
+            const list = document.getElementById('selected-list');
+            
+            if (selectedItems.length === 0) {
+                table.style.display = 'none';
+                return;
+            }
+
+            table.style.display = 'table';
+            list.innerHTML = '';
+            selectedItems.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = 'item-row';
+                tr.innerHTML = `
+                    <td><div style="font-weight:600;">${item.name}</div></td>
+                    <td>₱${item.price}</td>
+                    <td><input type="number" step="0.01" class="price-input" value="${item.promo_price}" oninput="updateByPrice(${idx}, this.value)"></td>
+                    <td><input type="number" class="price-input" value="${item.discount}" oninput="updateByPercent(${idx}, this.value)"></td>
+                    <td><ion-icon name="trash-outline" onclick="removeItem(${idx})" style="cursor:pointer; color:#f87171;"></ion-icon></td>
+                `;
+                list.appendChild(tr);
+            });
+        }
+
+        function updateByPrice(i, val) {
+            val = parseFloat(val) || 0;
+            selectedItems[i].promo_price = val;
+            const original = selectedItems[i].price;
+            selectedItems[i].discount = original > 0 ? Math.round((1 - (val / original)) * 100) : 0;
+            renderSelectedTable();
+        }
+
+        function updateByPercent(i, val) {
+            val = parseInt(val) || 0;
+            selectedItems[i].discount = val;
+            const original = selectedItems[i].price;
+            selectedItems[i].promo_price = (original * (1 - (val / 100))).toFixed(2);
+            renderSelectedTable();
+        }
+
+        function removeItem(i) { selectedItems.splice(i,1); renderSelectedTable(); }
+
+        document.getElementById('promo-form').onsubmit = async (e) => {
+            e.preventDefault();
+            if (selectedItems.length === 0) { 
+                alert('Please add at least one product to the promotion.'); 
+                return; 
+            }
+
+            const btn = document.getElementById('save-btn');
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+            
+            const fd = new FormData(e.target);
+            fd.append('items_json', JSON.stringify(selectedItems));
+
+            try {
+                const res = await fetch('../admin_API/save_merchant_promotion.php', { method: 'POST', body: fd });
+                const json = await res.json();
+                if (json.status === 'success') {
+                    window.location.href = `merchant_marketing.html?id=${merchantId}`;
+                } else {
+                    alert("Error: " + json.message);
+                    btn.disabled = false;
+                    btn.innerText = "Confirm and Save";
+                }
+            } catch (err) { 
+                console.error("Network Error:", err); 
+                alert("Network error. Please check your connection.");
+                btn.disabled = false;
+                btn.innerText = "Confirm and Save";
+            }
+        };
+    </script>
+</body>
+</html>

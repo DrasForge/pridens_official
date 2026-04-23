@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Management - Inventory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/accounts.css">
+    <link rel="stylesheet" href="css/products.css">
+    <link rel="stylesheet" href="css/inventory.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar Navigation (Modular) -->
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-header">
+                <button class="menu-btn" id="open-sidebar">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </button>
+                <div class="header-search">
+                    <ion-icon name="search-outline"></ion-icon>
+                    <input type="text" id="inventory-search" placeholder="Search by SKU or Name...">
+                </div>
+                <div class="header-profile">
+                    <div class="notification-bell">
+                        <ion-icon name="notifications-outline"></ion-icon>
+                        <span class="badge" id="low-stock-count">0</span>
+                    </div>
+                    <div class="avatar">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Admin">
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <div class="welcome-banner">
+                        <h1>Inventory Management</h1>
+                        <p>Track stock levels and manage restocks for physical products.</p>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn-secondary" id="refresh-inventory" style="padding: 12px; height: 48px; width: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <ion-icon name="refresh-outline" style="font-size: 20px;"></ion-icon>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container fade-in">
+                    <table class="data-table" id="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Product Name</th>
+                                <th>In Stock</th>
+                                <th>Threshold</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-tbody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 40px;">
+                                    <div class="loader" style="margin: 0 auto 16px;"></div>
+                                    <p>Loading inventory data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Stock Adjustment Modal -->
+    <div class="modal-overlay" id="stock-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Adjust Stock</h2>
+                <button class="close-modal" id="close-modal">&times;</button>
+            </div>
+            <div id="product-summary" style="margin-bottom: 20px; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 12px;">
+                <p style="color: var(--text-muted); font-size: 13px;">Selected Product:</p>
+                <p id="modal-product-name" style="font-weight: 600; font-size: 16px; margin-top: 4px;">—</p>
+                <p id="modal-current-stock" style="color: var(--primary-color); font-weight: 700; font-size: 14px; margin-top: 4px;">Current: 0 units</p>
+            </div>
+            <form id="stock-form">
+                <input type="hidden" id="modal-product-id">
+                <div class="form-group">
+                    <label for="adjustment-type">Action</label>
+                    <select id="adjustment-type">
+                        <option value="Restock">Add Stock (+)</option>
+                        <option value="Adjustment">Correct Stock (Manual Correction)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="stock-change">Amount</label>
+                    <input type="number" id="stock-change" placeholder="e.g. 10" required>
+                </div>
+                <div class="form-group">
+                    <label for="notes">Notes (Optional)</label>
+                    <input type="text" id="notes" placeholder="Reason for adjustment...">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="btn-cancel">Cancel</button>
+                    <button type="submit" class="btn-save" id="btn-save-stock">Confirm Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/sidebar-module.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/inventory.js"></script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insurance Approvals - Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/accounts.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(30,34,50,0.7);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            transition: 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.1); }
+        .stat-value { font-size: 28px; font-weight: 700; color: var(--primary-color); margin-bottom: 5px; }
+        .stat-label { font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+        .tab-btn.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+        }
+        .accounts-table-container {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            backdrop-filter: blur(16px);
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        .table-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(15, 23, 42, 0.4);
+        }
+        .accounts-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        .accounts-table th {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .accounts-table td {
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 13px;
+            vertical-align: middle;
+        }
+        
+        /* Column Widths to prevent overlapping */
+        .col-subscriber { width: 25%; }
+        .col-member { width: 12%; }
+        .col-plan { width: 18%; }
+        .col-receipt { width: 15%; }
+        .col-doc { width: 15%; }
+        .col-actions { width: 15%; }
+
+        .upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            padding: 8px;
+            border: 1px dashed rgba(255,255,255,0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 11px;
+            color: var(--text-muted);
+            transition: 0.3s;
+            text-align: center;
+        }
+        .upload-label:hover { border-color: var(--primary-color); color: #fff; background: rgba(99,102,241,0.05); }
+
+        .policy-input {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            width: 100%;
+            margin-bottom: 8px;
+            transition: 0.3s;
+        }
+        .policy-input:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 2px rgba(99,102,241,0.2); }
+
+        .btn-approve {
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            justify-content: center;
+            opacity: 0.5;
+            pointer-events: none;
+            transition: 0.3s;
+        }
+        .btn-approve.ready { opacity: 1; pointer-events: auto; }
+        .btn-approve.ready:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+        
+        .doc-link { color: var(--primary-color); text-decoration: none; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+        .doc-link:hover { text-decoration: underline; }
+        .upload-info { font-size: 11px; color: #4ade80; display: flex; align-items: center; gap: 4px; }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar Navigation (Modular) -->
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-header">
+                <button class="menu-btn" id="open-sidebar">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </button>
+                <div class="header-profile">
+                    <div class="avatar">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="Admin">
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <div class="welcome-banner">
+                    <h1>Insurance Approval</h1>
+                    <p>Upload application form documents and approve subscriber insurance policies.</p>
+                </div>
+
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statPending">0</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statReady" style="color: #38bdf8;">0</div>
+                        <div class="stat-label">Doc Uploaded — Ready</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statActive" style="color: #4ade80;">0</div>
+                        <div class="stat-label">Active Policies</div>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab-btn active" id="btnTabPending">
+                        <ion-icon name="hourglass-outline"></ion-icon> Pending
+                    </button>
+                    <button class="tab-btn" id="btnTabApproved">
+                        <ion-icon name="checkmark-done-outline"></ion-icon> Approved Policies
+                    </button>
+                </div>
+
+                <div class="accounts-table-container">
+                    <div class="table-header">
+                        <h3 id="tableTitle">Pending Insurance Approvals</h3>
+                    </div>
+                    
+                    <table class="accounts-table" id="approvalsTable">
+                        <thead>
+                            <tr id="tableHead">
+                                <th class="col-subscriber">Subscriber</th>
+                                <th class="col-member">Member ID</th>
+                                <th class="col-plan">Plan</th>
+                                <th class="col-receipt">Receipt #</th>
+                                <th class="col-doc">Document</th>
+                                <th class="col-actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="approvalsBody">
+                            <!-- Data populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Hidden file input for uploads -->
+    <input type="file" id="documentInput" style="display: none;" accept=".pdf,.jpg,.jpeg,.png">
+
+    <script src="js/sidebar-module.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/insurance_approvals.js"></script>
+    <script>
+        // Sidebar Toggles
+        document.addEventListener('DOMContentLoaded', () => {
+             document.querySelectorAll('.nav-item-has-children').forEach(toggle => {
+                const submenu = toggle.nextElementSibling;
+                if (submenu && submenu.classList.contains('sub-menu')) {
+                    toggle.addEventListener('click', () => {
+                        submenu.classList.toggle('open');
+                        const icon = toggle.querySelector('.chevron');
+                        if (icon) {
+                            icon.style.transform = submenu.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
