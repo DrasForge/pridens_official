@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P-Voucher Ledger - Pridens Merchant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <style>
+        .ledger-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; padding: 24px; }
+        .stat-label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 10px; }
+        .stat-value { font-size: 1.5rem; font-weight: 800; color: #fff; }
+        
+        .scanner-cta { background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 24px; padding: 40px; text-align: center; margin-bottom: 40px; border: 1px solid rgba(255,255,255,0.1); position: relative; overflow: hidden; }
+        .scanner-cta h2 { font-size: 1.5rem; color: #fff; margin-bottom: 10px; position: relative; z-index: 1; }
+        .scanner-cta p { color: rgba(255,255,255,0.8); margin-bottom: 25px; position: relative; z-index: 1; }
+        .btn-scan { background: #fff; color: #6366f1; padding: 14px 32px; border-radius: 14px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; transition: all 0.2s; position: relative; z-index: 1; border: none; cursor: pointer; }
+        .btn-scan:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        
+        .payout-status { padding: 4px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
+        .status-paid { background: rgba(74, 222, 128, 0.1); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.2); }
+        .status-pending { background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.2); }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation"><div class="orb orb-1"></div></div>
+    
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>P-Voucher Ledger</h1>
+                    <p style="color:var(--text-dim); font-size:0.85rem;">Platform voucher redemptions and Paymongo disbursements</p>
+                </div>
+            </header>
+
+            <div class="scanner-cta">
+                <ion-icon name="qr-code-outline" style="position:absolute; right:-20px; bottom:-20px; font-size:150px; color:rgba(255,255,255,0.05);"></ion-icon>
+                <h2>Quick Redemption</h2>
+                <p>Scan a subscriber's P-Voucher barcode to instantly apply discounts and trigger Paymongo remittance.</p>
+                <button class="btn-scan" onclick="openScanner()">
+                    <ion-icon name="scan-outline"></ion-icon>
+                    Open Voucher Scanner
+                </button>
+            </div>
+
+            <div class="ledger-stats">
+                <div class="stat-card">
+                    <div class="stat-label">Total Redeemed</div>
+                    <div class="stat-value" id="stat-total-redeemed">P0.00</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Handling Fees</div>
+                    <div class="stat-value" id="stat-fees">P0.00</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pending Payouts</div>
+                    <div class="stat-value" id="stat-pending" style="color:#fbbf24;">P0.00</div>
+                </div>
+            </div>
+
+            <div class="glass-card" style="padding:0; overflow:hidden;">
+                <table style="width:100%; border-collapse:collapse; color:#fff; text-align:left;">
+                    <thead>
+                        <tr style="background:rgba(255,255,255,0.02); border-bottom:1px solid rgba(255,255,255,0.06);">
+                            <th style="padding:20px;">Voucher Code</th>
+                            <th style="padding:20px;">Redeem Date</th>
+                            <th style="padding:20px;">Voucher Value</th>
+                            <th style="padding:20px;">Handling Fee</th>
+                            <th style="padding:20px;">Total Payout</th>
+                            <th style="padding:20px;">Paymongo Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledger-tbody">
+                        <tr><td colspan="6" style="padding:40px; text-align:center; color:var(--text-dim);">Fetching vault data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scanner Overlay -->
+    <div id="scanner-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9999; display:none; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(10px);">
+        <div style="position:relative; width:300px; height:300px; border:2px solid #6366f1; border-radius:24px; overflow:hidden;">
+            <div id="scanner-line" style="position:absolute; top:0; left:0; width:100%; height:2px; background:#6366f1; box-shadow:0 0 20px #6366f1; animation:scan 2s linear infinite;"></div>
+            <div style="background:rgba(0,0,0,0.5); width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+                <ion-icon name="qr-code-outline" style="font-size:100px; color:rgba(255,255,255,0.1);"></ion-icon>
+            </div>
+        </div>
+        <div style="margin-top:30px; text-align:center;">
+            <h3 style="color:#fff; margin-bottom:10px;">Ready to Scan</h3>
+            <p style="color:var(--text-dim); margin-bottom:20px;">Position the barcode within the frame</p>
+            <input type="text" id="manual-code" placeholder="Enter Code Manually" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:12px; border-radius:12px; color:#fff; width:220px; text-align:center;">
+            <br><br>
+            <button class="btn-primary" onclick="submitRedemption()">Redeem Voucher</button>
+            <button class="btn-status" onclick="closeScanner()">Cancel</button>
+        </div>
+    </div>
+
+    <style>
+        @keyframes scan { 0% { top:0% } 100% { top:100% } }
+    </style>
+
+    <script src="js/marketplace-sidebar.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const merchantId = urlParams.get('id') || urlParams.get('merchant_id');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if(!merchantId) { window.location.href = 'merchants.html'; return; }
+            loadLedger();
+        });
+
+        async function loadLedger() {
+            try {
+                const res = await fetch(`../admin_API/get_merchant_pvoucher_ledger.php?merchant_id=${merchantId}`);
+                const json = await res.json();
+                if(json.status === 'success') {
+                    renderLedger(json.data);
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function renderLedger(data) {
+            const tbody = document.getElementById('ledger-tbody');
+            if(data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="padding:40px; text-align:center; color:var(--text-dim);">No redemptions found in history.</td></tr>';
+                return;
+            }
+
+            let totalRedeemed = 0, totalFees = 0, totalPending = 0;
+
+            tbody.innerHTML = data.map(l => {
+                const amount = parseFloat(l.amount);
+                const fee = parseFloat(l.handling_fee);
+                const total = parseFloat(l.total_payout);
+                
+                totalRedeemed += amount;
+                totalFees += fee;
+                if(l.payout_status === 'Pending') totalPending += total;
+
+                return `
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+                        <td style="padding:20px; font-weight:700; font-family:monospace;">${l.voucher_code}</td>
+                        <td style="padding:20px; color:var(--text-dim); font-size:0.8rem;">${new Date(l.created_at).toLocaleString()}</td>
+                        <td style="padding:20px; font-weight:600;">₱${amount.toLocaleString()}</td>
+                        <td style="padding:20px; color:#4ade80;">+₱${fee.toLocaleString()}</td>
+                        <td style="padding:20px; font-weight:800; color:#fff;">₱${total.toLocaleString()}</td>
+                        <td style="padding:20px;">
+                            <span class="payout-status status-${l.payout_status.toLowerCase()}">${l.payout_status}</span>
+                            ${l.paid_at ? `<div style="font-size:0.6rem; color:var(--text-dim); margin-top:4px;">${new Date(l.paid_at).toLocaleDateString()}</div>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('stat-total-redeemed').innerText = `₱${totalRedeemed.toLocaleString()}`;
+            document.getElementById('stat-fees').innerText = `₱${totalFees.toLocaleString()}`;
+            document.getElementById('stat-pending').innerText = `₱${totalPending.toLocaleString()}`;
+        }
+
+        function openScanner() {
+            document.getElementById('scanner-overlay').style.display = 'flex';
+            document.getElementById('manual-code').focus();
+        }
+
+        function closeScanner() {
+            document.getElementById('scanner-overlay').style.display = 'none';
+        }
+
+        async function submitRedemption() {
+            const code = document.getElementById('manual-code').value.trim();
+            if(!code) return alert('Enter a voucher code');
+
+            const fd = new FormData();
+            fd.append('merchant_id', merchantId);
+            fd.append('voucher_code', code);
+
+            try {
+                const res = await fetch('../admin_API/redeem_pvoucher.php', { method: 'POST', body: fd });
+                const json = await res.json();
+                if(json.status === 'success') {
+                    alert(`✅ REDEEMED SUCCESS!\n\nValue: ₱${json.data.voucher_amount}\nHandling Fee: ₱${json.data.handling_fee}\n\nPaymongo has been triggered for ₱${json.data.total_disbursed} remittance.`);
+                    closeScanner();
+                    loadLedger();
+                } else {
+                    alert('❌ Redemption Failed: ' + json.message);
+                }
+            } catch(e) { alert('Network error'); }
+        }
+    </script>
+</body>
+</html>

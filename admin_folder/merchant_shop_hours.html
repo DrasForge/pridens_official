@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Schedule - Merchant Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        .schedule-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px; margin-top: 20px; }
+        .day-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .day-row:last-child { border-bottom: none; }
+        .day-label { font-weight: 700; width: 120px; color: #fff; }
+        .time-inputs { display: flex; align-items: center; gap: 12px; }
+        .time-inputs input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 8px; border-radius: 8px; }
+        .status-toggle { display: flex; align-items: center; gap: 8px; }
+        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #6366f1; }
+        input:checked + .slider:before { transform: translateX(20px); }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation"><div class="orb orb-1"></div></div>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>Shop Schedule</h1>
+                    <p style="color:var(--text-dim); font-size:0.85rem;">Manage your store's operating hours</p>
+                </div>
+            </header>
+
+            <div class="dashboard-content" style="max-width: 800px;">
+                <div class="schedule-card fade-in">
+                    <p style="font-size:0.9rem; color:var(--text-dim); margin-bottom:20px;">Orders for <strong style="color:#fff;">Food</strong> and <strong style="color:#fff;">Services</strong> categories will only be accepted during your shop's open hours.</p>
+                    
+                    <form id="schedule-form">
+                        <div id="days-container">
+                            <!-- Populated via JS -->
+                        </div>
+
+                        <div style="margin-top:30px; display:flex; justify-content:flex-end;">
+                            <button type="submit" class="btn-publish" style="padding:14px 40px;">Save Schedule</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/marketplace-sidebar.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const merchantId = urlParams.get('merchant_id') || urlParams.get('id');
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSchedule();
+        });
+
+        async function loadSchedule() {
+            const container = document.getElementById('days-container');
+            container.innerHTML = days.map(day => `
+                <div class="day-row" data-day="${day}">
+                    <div class="day-label">${day}</div>
+                    <div class="status-toggle">
+                        <span style="font-size:0.8rem; color:var(--text-dim);">Close</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="day-is-open" checked onchange="toggleTimeInputs('${day}', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="font-size:0.8rem; color:#fff;">Open</span>
+                    </div>
+                    <div class="time-inputs" id="times-${day}">
+                        <input type="time" class="day-open" value="08:00">
+                        <span style="color:rgba(255,255,255,0.3);">to</span>
+                        <input type="time" class="day-close" value="20:00">
+                    </div>
+                </div>
+            `).join('');
+
+            try {
+                const res = await fetch(`../admin_API/get_merchant_hours.php?merchant_id=${merchantId}`);
+                const json = await res.json();
+                if (json.status === 'success' && json.data.length > 0) {
+                    json.data.forEach(h => {
+                        const row = document.querySelector(`.day-row[data-day="${h.day_of_week}"]`);
+                        if (row) {
+                            row.querySelector('.day-is-open').checked = h.is_open == 1;
+                            row.querySelector('.day-open').value = h.open_time.substring(0, 5);
+                            row.querySelector('.day-close').value = h.close_time.substring(0, 5);
+                            toggleTimeInputs(h.day_of_week, h.is_open == 1);
+                        }
+                    });
+                }
+            } catch(e) {}
+        }
+
+        function toggleTimeInputs(day, isOpen) {
+            document.getElementById(`times-${day}`).style.opacity = isOpen ? '1' : '0.3';
+            document.getElementById(`times-${day}`).querySelectorAll('input').forEach(i => i.disabled = !isOpen);
+        }
+
+        document.getElementById('schedule-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const schedule = [];
+            document.querySelectorAll('.day-row').forEach(row => {
+                schedule.push({
+                    day: row.dataset.day,
+                    is_open: row.querySelector('.day-is-open').checked ? 1 : 0,
+                    open_time: row.querySelector('.day-open').value,
+                    close_time: row.querySelector('.day-close').value
+                });
+            });
+
+            try {
+                const res = await fetch('../admin_API/save_merchant_hours.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ merchant_id: merchantId, schedule: schedule })
+                });
+                const json = await res.json();
+                if (json.status === 'success') alert('Schedule saved successfully!'); else alert(json.message);
+            } catch(ex) { alert('Connection Error'); }
+        };
+    </script>
+</body>
+</html>

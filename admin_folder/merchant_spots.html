@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spots Management - Pridens</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --text-dim: rgba(255, 255, 255, 0.6);
+            --bg-dark: #0f172a;
+        }
+        body { 
+            display: block !important; 
+            justify-content: flex-start !important; 
+            align-items: flex-start !important; 
+            min-height: 100vh; 
+            overflow: auto !important; 
+            background-color: var(--bg-dark) !important;
+            margin: 0;
+            padding: 0;
+        }
+        .app-layout { display: flex; min-height: 100vh; background: var(--bg-dark); color: #fff; }
+        .sidebar { width: 280px; background: rgba(10, 10, 15, 0.8); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); }
+        .main-content { flex: 1; padding: 40px; }
+        .spot-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; overflow: hidden; position: relative; transition: all 0.3s; }
+        .spot-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); border-color: rgba(99,102,241,0.5); }
+        .spot-cover { height: 140px; background: #222; background-size: cover; background-position: center; position: relative; }
+        .spot-profile { width: 70px; height: 70px; border-radius: 50%; border: 4px solid #141420; position: absolute; bottom: -35px; left: 20px; background: #fff; background-size: cover; background-position: center; }
+        .spot-info { padding: 45px 20px 20px; }
+        .limit-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+        .limit-fill { height: 100%; background: #10b981; transition: width 0.3s; }
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>My Spots</h1>
+                    <p style="color:var(--text-dim); font-size:0.85rem;">Manage your physical store locations</p>
+                </div>
+                <div style="display:flex; align-items:center; gap:15px; background:rgba(255,255,255,0.03); padding:10px 20px; border-radius:12px;">
+                    <ion-icon name="information-circle-outline" style="color:#6366f1;"></ion-icon>
+                    <div>
+                        <div style="font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; font-weight:700;">Usage Limit</div>
+                        <div style="font-weight:700;"><span id="spot-count">0</span> / 1 Spot</div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h2 style="font-size:1.4rem;">Spot Locations</h2>
+                        <p style="color:var(--text-dim); font-size:0.9rem;">Showcase your physical stores to customers with HD media.</p>
+                    </div>
+                    <button class="btn-primary" id="btn-add-spot" onclick="openAddSpot()" style="font-size:0.95rem; display:none;"><ion-icon name="add-circle-outline" style="font-size:1.2rem; margin-right:6px; vertical-align:middle;"></ion-icon> Create Spot</button>
+                </div>
+
+                <div class="spots-grid" id="spots-container">
+                    <div style="grid-column:1/-1; text-align:center; padding:100px;">
+                        <ion-icon name="hourglass-outline" style="font-size:32px; animation:spin 1s linear infinite; color:#10b981;"></ion-icon>
+                        <p style="margin-top:16px; color:var(--text-dim);">Loading spots...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/marketplace-sidebar.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const merchantId = urlParams.get('id') || urlParams.get('merchant_id');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!merchantId) { window.location.href = 'merchants.html'; return; }
+            loadSpots();
+        });
+
+        async function loadSpots() {
+            try {
+                const res = await fetch(`../admin_API/get_spots.php?merchant_id=${merchantId}`);
+                const json = await res.json();
+                if(json.status === 'success') {
+                    document.getElementById('spot-count').textContent = json.count;
+                    
+                    const btn = document.getElementById('btn-add-spot');
+                    if (json.count >= 1) {
+                        btn.style.display = 'none';
+                    } else {
+                        btn.style.display = 'inline-block';
+                    }
+
+                    renderSpots(json.data);
+                } else {
+                    document.getElementById('spots-container').innerHTML = `<p style="padding:50px; text-align:center; color:var(--text-dim);">Error loading spots.</p>`;
+                }
+            } catch (e) {
+                document.getElementById('spots-container').innerHTML = `<p style="padding:50px; text-align:center; color:var(--text-dim);">Connection failed.</p>`;
+            }
+        }
+
+        function renderSpots(spots) {
+            const container = document.getElementById('spots-container');
+            if (spots.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column:1/-1; text-align:center; padding:100px; background:rgba(255,255,255,0.02); border-radius:20px; border:2px dashed rgba(255,255,255,0.05);">
+                        <ion-icon name="storefront-outline" style="font-size:64px; color:rgba(255,255,255,0.1);"></ion-icon>
+                        <h3 style="margin-top:20px; font-size:1.2rem;">No Spots Found</h3>
+                        <p style="color:var(--text-dim); max-width:400px; margin:10px auto;">You haven't set up any physical locations yet. Create your first spot to attract local customers.</p>
+                        <button class="btn-primary" onclick="openAddSpot()" style="margin-top:20px;"><ion-icon name="add-outline"></ion-icon> Create First Spot</button>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = spots.map(s => {
+                const cover = s.image_path ? `../${s.image_path}` : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80';
+                const profile = s.spot_profile ? (s.spot_profile.startsWith('http') ? s.spot_profile : `../${s.spot_profile}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(s.spot_name)}&background=random`;
+                
+                return `
+                    <div class="spot-card fade-in">
+                        <div class="spot-cover" style="background-image:url('${cover}')">
+                            <div class="spot-profile" style="background-image:url('${profile}')"></div>
+                        </div>
+                        <div class="spot-info">
+                            <h3 style="font-size:1.1rem; color:#fff;">${s.spot_name}</h3>
+                            <p style="font-size:0.8rem; color:var(--text-dim); margin-top:4px;">${s.spot_tagline || 'Spot Location'}</p>
+                            
+                            <div style="display:flex; align-items:center; gap:5px; margin-top:12px; font-size:0.8rem; color:#10b981;">
+                                <ion-icon name="location-outline"></ion-icon> ${s.barangay || 'GPS Location'}
+                            </div>
+                            
+                            <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.05); padding-top:15px;">
+                                <span style="font-size:0.75rem; color:var(--text-dim);"><ion-icon name="images-outline" style="vertical-align:middle;"></ion-icon> ${s.media_count || 0} Media Files</span>
+                                <div style="display:flex; gap:8px;">
+                                    <button class="btn-status" onclick="editSpot(${s.id})" style="background:rgba(99,102,241,0.1); color:#818cf8; border:1px solid rgba(99,102,241,0.3); padding:5px 12px; font-size:0.75rem;"><ion-icon name="create-outline"></ion-icon></button>
+                                    <button class="btn-status" onclick="deleteSpot(${s.id})" style="background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid #ef4444; padding:5px 12px; font-size:0.75rem;"><ion-icon name="trash-outline"></ion-icon></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openAddSpot() {
+            window.location.href = `merchant_spot_editor.html?merchant_id=${merchantId}`;
+        }
+
+        function editSpot(id) {
+            window.location.href = `merchant_spot_editor.html?merchant_id=${merchantId}&spot_id=${id}`;
+        }
+
+        async function deleteSpot(id) {
+            if(!confirm("Are you sure you want to delete this spot? This will permanently remove all associated media files.")) return;
+            try {
+                const res = await fetch(`../admin_API/delete_spot.php`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({spot_id: id, merchant_id: merchantId})
+                });
+                const json = await res.json();
+                if(json.status === 'success'){
+                    loadSpots();
+                } else {
+                    alert(json.message);
+                }
+            } catch(e) { alert('Error deleting spot'); }
+        }
+    </script>
+</body>
+</html>

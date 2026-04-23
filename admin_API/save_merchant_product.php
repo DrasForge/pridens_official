@@ -106,7 +106,7 @@ try {
                 weight_g = ?, length_cm = ?, width_cm = ?, height_cm = ?, inclusions = ?,
                 allow_local_deliv = ?, allow_nationwide_deliv = ?, allow_pickup = ?, 
                 allow_cod = ?, allow_bank = ?, allow_ewallet = ?,
-                status = ?, is_available = ?, is_preorder = ?, preorder_days = ?, is_exclusive = ?, allow_direct_payment = ?, is_featured = ?, image_path = ?, video_path = ?
+                status = ?, is_available = ?, is_preorder = ?, preorder_days = ?, is_exclusive = ?, allow_direct_payment = ?, is_featured = ?, image_path = ?, video_path = ?, prep_time_mins = ?
                 WHERE id = ? AND merchant_id = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
@@ -115,7 +115,7 @@ try {
             $weight, $length, $width, $height, $inclusions,
             $allowLocal, $allowNationwide, $allowPickup,
             $allowCod, $allowBank, $allowEwallet,
-            $status, $isAvailable, $isPreorder, $preorderDays, $isExclusive, $allowDirect, $isFeatured, $imagePath, $videoPath,
+            $status, $isAvailable, $isPreorder, $preorderDays, $isExclusive, $allowDirect, $isFeatured, $imagePath, $videoPath, $prepTime,
             $id, $merchantId
         ]);
         $productId = $id;
@@ -127,8 +127,8 @@ try {
                  weight_g, length_cm, width_cm, height_cm, inclusions,
                  allow_local_deliv, allow_nationwide_deliv, allow_pickup, 
                  allow_cod, allow_bank, allow_ewallet,
-                 status, is_available, is_preorder, preorder_days, is_exclusive, allow_direct_payment, is_featured, image_path, video_path)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                 status, is_available, is_preorder, preorder_days, is_exclusive, allow_direct_payment, is_featured, image_path, video_path, prep_time_mins)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             $merchantId, $sellerSku, $pridensSku, $name, $brand, $description, $category, $cCat, $hasVariations,
@@ -136,7 +136,7 @@ try {
             $weight, $length, $width, $height, $inclusions,
             $allowLocal, $allowNationwide, $allowPickup,
             $allowCod, $allowBank, $allowEwallet,
-            $status, $isAvailable, $isPreorder, $preorderDays, $isExclusive, $allowDirect, $isFeatured, $imagePath, $videoPath
+            $status, $isAvailable, $isPreorder, $preorderDays, $isExclusive, $allowDirect, $isFeatured, $imagePath, $videoPath, $prepTime
         ]);
         $productId = $pdo->lastInsertId();
     }
@@ -236,6 +236,56 @@ try {
                 if (move_uploaded_file($_FILES['gallery']['tmp_name'][$i], $targetFile)) {
                     $stmt = $pdo->prepare("INSERT INTO product_images (product_id, image_path, sort_order) VALUES (?, ?, ?)");
                     $stmt->execute([$productId, $targetFile, $i + 1]);
+                }
+            }
+        }
+    }
+
+    // 5. Handle PH Standard KYC
+    $kycRegType = $_POST['kyc_reg_type'] ?? 'None';
+    $kycLicense = $_POST['kyc_license_number'] ?? null;
+    $kycExpiry = $_POST['kyc_expiry_date'] ?: null;
+    $kycOrigin = $_POST['kyc_origin'] ?? 'Local-PH';
+    $kycWarnings = $_POST['kyc_warnings'] ?? '';
+
+    $stmt = $pdo->prepare("INSERT INTO merchant_product_kyc (product_id, reg_type, license_number, expiry_date, manufacturing_origin, usage_warnings) 
+                           VALUES (?, ?, ?, ?, ?, ?) 
+                           ON DUPLICATE KEY UPDATE 
+                           reg_type=VALUES(reg_type), license_number=VALUES(license_number), expiry_date=VALUES(expiry_date), 
+                           manufacturing_origin=VALUES(manufacturing_origin), usage_warnings=VALUES(usage_warnings)");
+    $stmt->execute([$productId, $kycRegType, $kycLicense, $kycExpiry, $kycOrigin, $kycWarnings]);
+
+    // 6. Handle Food Modifiers
+    $modifiersJson = $_POST['modifiers_data'] ?? '[]';
+    $modifierGroups = json_decode($modifiersJson, true);
+    if ($productId && is_array($modifierGroups)) {
+        // Clear existing modifiers for this product to prevent duplicates
+        $pdo->prepare("DELETE FROM product_menu_modifier_groups WHERE product_id = ?")->execute([$productId]);
+        
+        foreach ($modifierGroups as $idx => $group) {
+            if (empty($group['name'])) continue;
+            
+            $stmt = $pdo->prepare("INSERT INTO product_menu_modifier_groups (product_id, name, min_selection, max_selection, is_required, sort_order) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([
+                $productId, 
+                $group['name'], 
+                $group['min_sel'] ?? 0, 
+                $group['max_sel'] ?? 1, 
+                ($group['is_required'] ? 1 : 0), 
+                $idx
+            ]);
+            $groupId = $pdo->lastInsertId();
+            
+            if (isset($group['options']) && is_array($group['options'])) {
+                foreach ($group['options'] as $oIdx => $opt) {
+                    if (empty($opt['name'])) continue;
+                    $optStmt = $pdo->prepare("INSERT INTO product_menu_modifier_options (group_id, name, extra_price, sort_order) VALUES (?, ?, ?, ?)");
+                    $optStmt->execute([
+                        $groupId, 
+                        $opt['name'], 
+                        $opt['price'] ?? 0, 
+                        $oIdx
+                    ]);
                 }
             }
         }

@@ -1,5 +1,7 @@
 <?php
 require 'db.php';
-$stmt = $pdo->query("SHOW COLUMNS FROM admins");
-$cols = $stmt->fetchAll(PDO::FETCH_COLUMN);
-print_r($cols);
+$stmt = $pdo->query("DESCRIBE merchant_custom_categories");
+while($row = $stmt->fetch()) {
+    echo $row['Field'] . " - " . $row['Type'] . "\n";
+}
+?>

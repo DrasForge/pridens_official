@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Monitoring - Seller Centre</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <style>
+        .tabs-container { display: flex; gap: 32px; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 30px; padding: 0 10px; overflow-x: auto; scrollbar-width: none; }
+        .tabs-container::-webkit-scrollbar { display: none; }
+        .tab-item { padding: 15px 0; color: var(--text-dim); cursor: pointer; font-size: 0.95rem; font-weight: 600; position: relative; transition: all 0.2s; white-space: nowrap; }
+        .tab-item:hover { color: #fff; }
+        .tab-item.active { color: #6366f1; }
+        .tab-item.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; background: #6366f1; border-radius: 3px; }
+
+        .order-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; margin-bottom: 20px; overflow: hidden; transition: all 0.2s; }
+        .order-card:hover { border-color: rgba(99, 102, 241, 0.3); background: rgba(255,255,255,0.04); }
+        
+        .order-header { padding: 15px 20px; background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .order-body { padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .order-footer { padding: 15px 20px; background: rgba(255,255,255,0.01); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.03); }
+
+        .buyer-info { display: flex; align-items: center; gap: 10px; }
+        .buyer-avatar { width: 24px; height: 24px; border-radius: 50%; background: #6366f1; color: #fff; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+
+        .status-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
+        .st-pending { background: rgba(234, 179, 8, 0.1); color: #facc15; }
+        .st-confirmed { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
+        .st-processing { background: rgba(99, 102, 241, 0.1); color: #818cf8; }
+        .st-completed { background: rgba(34, 197, 94, 0.1); color: #4ade80; }
+        .st-cancelled { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+
+        .schedule-pill { background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 8px; }
+        .method-pill { font-size: 0.7rem; color: #6366f1; background: rgba(99, 102, 241, 0.1); padding: 4px 10px; border-radius: 6px; font-weight: 700; }
+
+        .btn-status-update { background: #6366f1; color: #fff; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 0.85rem; }
+        .btn-status-update:hover { background: #4f46e5; transform: translateY(-2px); }
+
+        .price-text { font-size: 1.1rem; font-weight: 800; color: #fff; }
+        .exclusive-text { font-size: 0.7rem; color: #fbbf24; font-weight: 600; margin-top: 2px; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation">
+        <div class="orb orb-1"></div><div class="orb orb-2"></div>
+    </div>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>Service Monitoring</h1>
+                    <p style="color:var(--text-dim); font-size:0.85rem;">Track professional appointments and booking requests</p>
+                </div>
+            </header>
+
+            <div class="dashboard-content" style="padding-bottom:120px;">
+                <div class="tabs-container">
+                    <div class="tab-item active" onclick="filterByStatus('All', this)">All Appointments</div>
+                    <div class="tab-item" onclick="filterByStatus('Pending', this)">Pending</div>
+                    <div class="tab-item" onclick="filterByStatus('Confirmed', this)">Confirmed</div>
+                    <div class="tab-item" onclick="filterByStatus('Completed', this)">Completed</div>
+                </div>
+
+                <div id="monitoring-container">
+                    <div style="text-align:center; padding:100px;">
+                        <ion-icon name="sync-outline" style="font-size:32px; animation:spin 1s linear infinite; color:#6366f1;"></ion-icon>
+                        <p style="margin-top:16px; color:var(--text-dim);">Syncing service scheduler...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/marketplace-sidebar.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const merchantId = urlParams.get('id') || urlParams.get('merchant_id');
+        let currentOrders = [];
+        let activeStatus = 'All';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!merchantId) { window.location.href = 'merchants.html'; return; }
+            loadMonitoring();
+        });
+
+        async function loadMonitoring() {
+            try {
+                const res = await fetch(`../admin_API/get_merchant_service_orders.php?merchant_id=${merchantId}`);
+                const json = await res.json();
+                if(json.status === 'success') {
+                    currentOrders = json.data;
+                    renderOrders();
+                }
+            } catch(e) {}
+        }
+
+        function filterByStatus(status, el) {
+            activeStatus = status;
+            document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            renderOrders();
+        }
+
+        function renderOrders() {
+            const container = document.getElementById('monitoring-container');
+            const filtered = activeStatus === 'All' ? currentOrders : currentOrders.filter(o => o.status === activeStatus);
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:100px; color:var(--text-dim);">No appointments found for "${activeStatus}".</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(o => {
+                const initials = (o.first_name[0] + o.last_name[0]).toUpperCase();
+                const sDate = o.schedule_date ? new Date(o.schedule_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'To be scheduled';
+                const sTime = o.schedule_time || '';
+                const stClass = `st-${o.status.toLowerCase()}`;
+
+                return `
+                    <div class="order-card fade-in">
+                        <div class="order-header">
+                            <div class="buyer-info">
+                                <div class="buyer-avatar">${initials}</div>
+                                <div style="font-weight:700; color:#fff;">${o.first_name} ${o.last_name}</div>
+                                <span class="method-pill" style="margin-left:8px;">${o.payment_method}</span>
+                            </div>
+                            <span class="status-badge ${stClass}">${o.status}</span>
+                        </div>
+
+                        <div class="order-body">
+                            <div style="display:flex; gap:20px;">
+                                <div style="width:60px; height:60px; background:rgba(99,102,241,0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:#6366f1;">
+                                    <ion-icon name="construct" style="font-size:1.8rem;"></ion-icon>
+                                </div>
+                                <div>
+                                    <div style="font-weight:800; font-size:1.1rem;">${o.service_name}</div>
+                                    <div style="color:var(--text-dim); font-size:0.85rem; margin-top:4px; display:flex; align-items:center; gap:6px;">
+                                        <ion-icon name="location-outline"></ion-icon> ${o.service_method}
+                                    </div>
+                                    <div style="font-size:0.75rem; color:var(--text-dim); margin-top:10px;">Ref: ${o.order_sn}</div>
+                                </div>
+                            </div>
+
+                            <div style="text-align:right;">
+                                <div class="schedule-pill">
+                                    <ion-icon name="calendar-outline" style="color:#6366f1;"></ion-icon>
+                                    <span>${sDate} ${sTime}</span>
+                                </div>
+                                <div style="margin-top:15px; background:rgba(255,255,255,0.02); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.04); min-width:260px;">
+                                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-dim); margin-bottom:6px;">
+                                        <span>SRP Total:</span>
+                                        <span>₱${parseFloat(o.total_amount).toLocaleString()}</span>
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#818cf8; margin-bottom:6px;">
+                                        <span>Exclusive Plan Discount (13%):</span>
+                                        <span>-₱${parseFloat(o.exclusive_discount).toFixed(2)}</span>
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#a855f7; margin-bottom:4px;">
+                                        <span>Points System (1.5%):</span>
+                                        <span>-₱${((o.total_amount - o.exclusive_discount) * 0.015).toFixed(2)}</span>
+                                    </div>
+                                    <div style="font-size:0.6rem; color:var(--text-dim); text-align:left; margin-bottom:10px; opacity:0.7;">
+                                        (0.8% Subscriber: ₱${( (o.total_amount - o.exclusive_discount) * 0.008 ).toFixed(2)} | 0.7% Pridens: ₱${( (o.total_amount - o.exclusive_discount) * 0.007 ).toFixed(2)})
+                                    </div>
+
+                                    <div style="display:flex; align-items:center; gap:8px; color:#10b981; font-size:0.75rem; font-weight:800; margin-bottom:12px;">
+                                        <ion-icon name="sparkles-outline"></ion-icon> Points Received: ${parseFloat(o.points_earned).toFixed(2)} Pts
+                                    </div>
+
+                                    <div style="display:flex; justify-content:space-between; font-size:1rem; color:#6366f1; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px; margin-top:10px;">
+                                        <span style="font-weight:700;">Grand Total:</span>
+                                        <span style="font-weight:800;">₱${parseFloat(o.payable_amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="order-footer">
+                            <div style="display:flex; gap:12px; align-items:center;">
+                                <div style="font-size:0.75rem; color:var(--text-dim); font-weight:700;">PAYMENT:</div>
+                                <span class="status-badge ${o.pay_status === 'Paid' ? 'st-completed' : 'st-cancelled'}" style="font-size:0.65rem;">${o.pay_status}</span>
+                            </div>
+                            <div style="display:flex; gap:10px;">
+                                <select class="btn-status-update" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); padding:8px 15px;" onchange="updateStatus(${o.id}, this.value, 'status')">
+                                    <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="Confirmed" ${o.status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
+                                    <option value="Processing" ${o.status === 'Processing' ? 'selected' : ''}>Processing</option>
+                                    <option value="Completed" ${o.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                                    <option value="Cancelled" ${o.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                                </select>
+                                <button class="btn-status-update" onclick="updateStatus(${o.id}, 'Paid', 'payment_status')">Mark as Paid</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function updateStatus(orderId, val, field) {
+            try {
+                const body = { order_id: orderId };
+                body[field] = val;
+                const res = await fetch(`../admin_API/update_service_order_status.php`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(body)
+                });
+                const json = await res.json();
+                if(json.status === 'success') loadMonitoring();
+            } catch(e) {}
+        }
+    </script>
+</body>
+</html>

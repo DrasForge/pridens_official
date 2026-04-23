@@ -15,6 +15,7 @@ try {
     $name           = trim($_POST['name'] ?? '');
     $description    = trim($_POST['description'] ?? '');
     $sortOrder      = intval($_POST['sort_order'] ?? 0);
+    $generalType    = $_POST['general_type'] ?? 'Products';
 
     if (!$merchantId || !$name) {
         throw new Exception("Merchant ID and Category Name are required.");
@@ -35,12 +36,12 @@ try {
     }
 
     if ($id) {
-        $stmt = $pdo->prepare("UPDATE merchant_custom_categories SET name = ?, description = ?, image_path = ?, sort_order = ? WHERE id = ? AND merchant_id = ?");
-        $stmt->execute([$name, $description, $imagePath, $sortOrder, $id, $merchantId]);
+        $stmt = $pdo->prepare("UPDATE merchant_custom_categories SET name = ?, description = ?, image_path = ?, sort_order = ?, general_type = ? WHERE id = ? AND merchant_id = ?");
+        $stmt->execute([$name, $description, $imagePath, $sortOrder, $generalType, $id, $merchantId]);
         echo json_encode(['status'=>'success', 'message'=>'Category updated successfully']);
     } else {
-        $stmt = $pdo->prepare("INSERT INTO merchant_custom_categories (merchant_id, name, description, image_path, sort_order) VALUES (?, ?, ?, ?, ?)");
-        $stmt->execute([$merchantId, $name, $description, $imagePath, $sortOrder]);
+        $stmt = $pdo->prepare("INSERT INTO merchant_custom_categories (merchant_id, name, description, image_path, sort_order, general_type) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$merchantId, $name, $description, $imagePath, $sortOrder, $generalType]);
         echo json_encode(['status'=>'success', 'message'=>'Category added successfully']);
     }
 

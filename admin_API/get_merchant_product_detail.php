@@ -72,6 +72,28 @@ try {
     $stmt = $pdo->prepare("SELECT * FROM product_wholesale_prices WHERE product_id = ? ORDER BY min_quantity ASC");
     $stmt->execute([$productId]);
     $wholesale = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // 6. Get PH KYC
+    $stmt = $pdo->prepare("SELECT * FROM merchant_product_kyc WHERE product_id = ?");
+    $stmt->execute([$productId]);
+    $kyc = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$kyc) {
+        $kyc = ['reg_type' => 'None', 'license_number' => '', 'expiry_date' => '', 'manufacturing_origin' => 'Local-PH', 'usage_warnings' => ''];
+    }
+
+    // 7. Get Modifiers
+    $stmt = $pdo->prepare("SELECT * FROM product_menu_modifier_groups WHERE product_id = ? ORDER BY sort_order ASC");
+    $stmt->execute([$productId]);
+    $groups = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($groups as &$g) {
+        $optStmt = $pdo->prepare("SELECT * FROM product_menu_modifier_options WHERE group_id = ? ORDER BY sort_order ASC");
+        $optStmt->execute([$g['id']]);
+        $g['options'] = $optStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Map to frontend expected keys if necessary
+        $g['min_sel'] = $g['min_selection'];
+        $g['max_sel'] = $g['max_selection'];
+    }
 
     echo json_encode([
         'status' => 'success',
@@ -79,7 +101,9 @@ try {
             'variation_tiers' => $tiers,
             'models' => $models,
             'images' => $images,
-            'wholesale' => $wholesale
+            'wholesale' => $wholesale,
+            'kyc' => $kyc,
+            'modifier_groups' => $groups
         ])
     ]);
 

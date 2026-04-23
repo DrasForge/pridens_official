@@ -118,6 +118,7 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const merchantId = urlParams.get('id') || urlParams.get('merchant_id');
+        const mode = urlParams.get('mode') || 'Products';
         let selectedShopCatId = 0;
 
         if (!merchantId) {
@@ -125,7 +126,16 @@
             window.location.href = 'merchants.html';
         }
 
-        document.getElementById('link-add-product').href = `merchant_product_editor.html?merchant_id=${merchantId}`;
+        // Update Page Titles
+        if (mode === 'Foods') {
+            document.getElementById('merchant-name').textContent = 'My Menu';
+            document.querySelector('#categories-tabs .tab-item').textContent = 'All Dishes';
+            document.getElementById('link-add-product').innerHTML = '<ion-icon name="add-outline"></ion-icon> Add New Dish';
+            document.getElementById('link-add-product').href = `merchant_product_editor.html?merchant_id=${merchantId}&category=Foods`;
+        } else {
+            document.getElementById('merchant-name').textContent = 'My Products';
+            document.getElementById('link-add-product').href = `merchant_product_editor.html?merchant_id=${merchantId}&category=Products`;
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             loadMerchantInfo();
@@ -213,7 +223,8 @@
                 const res = await fetch(`../admin_API/get_merchant_detail.php?id=${merchantId}`);
                 const json = await res.json();
                 if (json.status === 'success') {
-                    document.getElementById('merchant-name').textContent = `${json.data.store_name} Inventory`;
+                    const prefix = mode === 'Foods' ? 'My Menu' : 'My Products';
+                    document.getElementById('merchant-name').textContent = `${prefix} - ${json.data.store_name}`;
                     document.getElementById('merchant-code').textContent = `Merchant Code: ${json.data.merchant_code}`;
                 }
             } catch(e) {}
@@ -221,7 +232,8 @@
 
         async function loadCategoryTabs() {
             try {
-                const res = await fetch(`../admin_API/get_merchant_categories.php?merchant_id=${merchantId}`);
+                const api = mode === 'Foods' ? 'get_merchant_food_categories.php' : 'get_merchant_categories.php';
+                const res = await fetch(`../admin_API/${api}?merchant_id=${merchantId}`);
                 const json = await res.json();
                 const tabsBar = document.getElementById('categories-tabs');
                 if (json.status === 'success' && json.data.length > 0) {
@@ -246,7 +258,8 @@
         async function loadProducts() {
             const container = document.getElementById('products-table-container');
             try {
-                const url = `../admin_API/get_merchant_products.php?merchant_id=${merchantId}${selectedShopCatId ? `&shop_category_id=${selectedShopCatId}` : ''}`;
+                const api = mode === 'Foods' ? 'get_merchant_dishes.php' : 'get_merchant_products.php';
+                const url = `../admin_API/${api}?merchant_id=${merchantId}${selectedShopCatId ? `&shop_category_id=${selectedShopCatId}` : ''}`;
                 const res = await fetch(url);
                 const json = await res.json();
 

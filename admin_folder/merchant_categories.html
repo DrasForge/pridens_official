@@ -47,8 +47,8 @@
             <div class="dashboard-content">
                 <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:32px;">
                     <div>
-                        <h1 id="merchant-name">Shop Categories</h1>
-                        <p style="color:var(--text-dim);">Organize your marketplace items into custom collections.</p>
+                        <h1 id="page-title">Shop Categories</h1>
+                        <p id="page-desc" style="color:var(--text-dim);">Organize your marketplace items into custom collections.</p>
                     </div>
                     <button class="btn-primary" onclick="openAddModal()" style="display:inline-flex; align-items:center; gap:8px; padding:12px 24px; border-radius:12px; font-weight:700;">
                         <ion-icon name="add-circle-outline" style="font-size:1.2rem;"></ion-icon> Create Category
@@ -104,19 +104,28 @@
 
     <script src="js/marketplace-sidebar.js"></script>
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const merchantId = urlParams.get('id') || urlParams.get('merchant_id');
+        // Use unique names to avoid IIFE collision if any
+        const categoryParams = new URLSearchParams(window.location.search);
+        const globalMerchantId = categoryParams.get('id') || categoryParams.get('merchant_id');
+        const categoryMode = categoryParams.get('mode') || 'Products';
 
-        if (!merchantId) { window.location.href='merchants.html'; }
+        if (!globalMerchantId) { window.location.href='merchants.html'; }
 
         document.addEventListener('DOMContentLoaded', () => {
+            if (categoryMode === 'Foods') {
+                document.getElementById('page-title').textContent = 'Menu Categories';
+                document.getElementById('page-desc').textContent = 'Group your dishes (e.g. Rice Meals, Breakfast, Desserts).';
+            } else if (categoryMode === 'Services') {
+                document.getElementById('page-title').textContent = 'Service Categories';
+                document.getElementById('page-desc').textContent = 'Organize your expertises (e.g. Wellness, Technical, Consultation).';
+            }
             loadCategories();
         });
 
         async function loadCategories() {
             const grid = document.getElementById('categories-grid');
             try {
-                const res = await fetch(`../admin_API/get_merchant_categories.php?merchant_id=${merchantId}`);
+                const res = await fetch(`../admin_API/get_merchant_categories.php?merchant_id=${globalMerchantId}&type=${categoryMode}`);
                 const json = await res.json();
 
                 if (json.status === 'success') {
@@ -154,16 +163,16 @@
         }
 
         function openAddModal() {
-            document.getElementById('modal-title').textContent = 'Create Shop Category';
+            document.getElementById('modal-title').textContent = categoryMode === 'Foods' ? 'Create Menu Category' : 'Create Shop Category';
             document.getElementById('catForm').reset();
             document.getElementById('f-id').value = '';
-            document.getElementById('f-merchant-id').value = merchantId;
+            document.getElementById('f-merchant-id').value = globalMerchantId;
             document.getElementById('img-prev').innerHTML = '';
             document.getElementById('catModal').style.display = 'flex';
         }
 
         function editCategory(cat) {
-            document.getElementById('modal-title').textContent = 'Edit Shop Category';
+            document.getElementById('modal-title').textContent = categoryMode === 'Foods' ? 'Edit Menu Category' : 'Edit Shop Category';
             document.getElementById('f-id').value = cat.id;
             document.getElementById('f-merchant-id').value = cat.merchant_id;
             document.getElementById('f-name').value = cat.name;
@@ -192,8 +201,11 @@
         document.getElementById('catForm').onsubmit = async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
+            formData.append('general_type', categoryMode);
+
             try {
-                const res = await fetch('../admin_API/save_merchant_category.php', {
+                // Unified saving logic
+                const res = await fetch(`../admin_API/save_merchant_category.php`, {
                     method: 'POST',
                     body: formData
                 });
@@ -206,9 +218,11 @@
         };
 
         async function deleteCategory(id) {
-            if (!confirm('Are you sure you want to delete this category? Products in this category will be unassigned.')) return;
+            const msg = categoryMode === 'Foods' ? 'Are you sure you want to delete this menu category?' : 'Are you sure you want to delete this category? Products in this category will be unassigned.';
+            if (!confirm(msg)) return;
             try {
-                const res = await fetch('../admin_API/delete_merchant_category.php', {
+                const api = categoryMode === 'Foods' ? 'delete_merchant_food_category.php' : 'delete_merchant_category.php';
+                const res = await fetch(`../admin_API/${api}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({id})

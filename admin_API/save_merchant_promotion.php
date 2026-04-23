@@ -16,9 +16,9 @@ try {
     $promo_id    = intval($_POST['id'] ?? 0);
     $name        = trim($_POST['name'] ?? '');
     
-    // HTML datetime-local sends YYYY-MM-DDTHH:MM. Replace T with space for MySQL.
     $start_time  = str_replace('T', ' ', $_POST['start_time'] ?? '');
     $end_time    = str_replace('T', ' ', $_POST['end_time'] ?? '');
+    $item_category = $_POST['item_category'] ?? 'Products';
     
     $items_json  = $_POST['items_json'] ?? '[]';
     $items       = json_decode($items_json, true);
@@ -40,28 +40,32 @@ try {
             throw new Exception("Promotion not found for this merchant.");
         }
 
-        $stmt = $pdo->prepare("UPDATE merchant_promotions SET name = ?, start_time = ?, end_time = ? WHERE id = ?");
-        $stmt->execute([$name, $start_time, $end_time, $promo_id]);
+        $stmt = $pdo->prepare("UPDATE merchant_promotions SET name = ?, start_time = ?, end_time = ?, item_category = ? WHERE id = ?");
+        $stmt->execute([$name, $start_time, $end_time, $item_category, $promo_id]);
         
         // Wipe items for replacement
         $pdo->prepare("DELETE FROM merchant_promotion_items WHERE promo_id = ?")->execute([$promo_id]);
     } else {
-        $stmt = $pdo->prepare("INSERT INTO merchant_promotions (merchant_id, name, start_time, end_time) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$merchant_id, $name, $start_time, $end_time]);
+        $stmt = $pdo->prepare("INSERT INTO merchant_promotions (merchant_id, name, start_time, end_time, item_category) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$merchant_id, $name, $start_time, $end_time, $item_category]);
         $promo_id = $pdo->lastInsertId();
     }
 
     // 2. Save Promotion Items
     if (!empty($items)) {
-        $stmt = $pdo->prepare("INSERT INTO merchant_promotion_items (promo_id, product_id, model_id, promo_price, discount_percent) VALUES (?, ?, ?, ?, ?)");
+        $single_type = 'Product';
+        if ($item_category === 'Foods') $single_type = 'Food';
+        elseif ($item_category === 'Services') $single_type = 'Service';
+        elseif ($item_category === 'Spots') $single_type = 'Spot';
+
+        $stmt = $pdo->prepare("INSERT INTO merchant_promotion_items (promo_id, item_id, item_type, model_id, promo_price, discount_percent) VALUES (?, ?, ?, ?, ?, ?)");
         foreach ($items as $item) {
-            $prod_id = intval($item['product_id']);
-            // Convert 'null' string or actual null to PHP null
+            $itm_id  = intval($item['product_id']); // Logic in JS sends product_id key
             $mod_id  = (isset($item['model_id']) && $item['model_id'] !== null && $item['model_id'] !== 'null' && $item['model_id'] !== '') ? intval($item['model_id']) : null;
             $price   = floatval($item['promo_price']);
-            $percent = intval($item['discount_percent']);
+            $percent = intval($item['discount_percent'] ?? $item['discount']);
 
-            $stmt->execute([$promo_id, $prod_id, $mod_id, $price, $percent]);
+            $stmt->execute([$promo_id, $itm_id, $single_type, $mod_id, $price, $percent]);
         }
     }
 

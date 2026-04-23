@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Spot - Pridens</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary: #6366f1;
+            --text-dim: rgba(255, 255, 255, 0.6);
+            --bg-dark: #0f172a;
+        }
+        body { 
+            display: block !important; 
+            justify-content: flex-start !important; 
+            align-items: flex-start !important; 
+            min-height: 100vh; 
+            overflow: auto !important; 
+            background-color: var(--bg-dark) !important;
+            margin: 0;
+            padding: 0;
+        }
+        .app-layout { display: flex; min-height: 100vh; background: var(--bg-dark); color: #fff; }
+        .sidebar { width: 280px; background: rgba(10, 10, 15, 0.8); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); }
+        .main-content { flex: 1; padding: 40px; }
+        .form-section { background: rgba(255,255,255,0.02); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 24px; }
+        .form-section h3 { font-size: 1.2rem; margin-bottom: 20px; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .form-section h3 ion-icon { color: #6366f1; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; color: var(--text-dim); font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-control { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-family: 'Inter', sans-serif; padding: 14px 16px; border-radius: 12px; transition: all 0.2s; outline: none; }
+        .form-control:focus { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,0.1); }
+        
+        /* Media Uploader Styles */
+        .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+        .media-slot { background: rgba(0,0,0,0.2); border: 2px dashed rgba(255,255,255,0.1); border-radius: 16px; padding: 10px; text-align: center; position: relative; transition: all 0.2s; }
+        .media-slot.drag-over { border-color: #6366f1; background: rgba(99,102,241,0.05); }
+        .media-preview-container { width: 100%; aspect-ratio: 16/9; background: #222; border-radius: 8px; margin-bottom: 10px; overflow: hidden; display: flex; justify-content: center; align-items: center; flex-direction: column; color: var(--text-dim); cursor: pointer; }
+        .media-preview { width: 100%; height: 100%; object-fit: cover; display: none; }
+        
+        .upload-input { position: absolute; width: 0; height: 0; opacity: 0; }
+        .caption-input { background: rgba(255,255,255,0.05); border: none; padding: 8px; border-radius: 6px; color: #fff; font-size: 0.8rem; width: 100%; margin-top: 5px; outline: none; font-family: 'Inter', sans-serif; }
+        .caption-input:focus { background: rgba(255,255,255,0.1); }
+
+        .amenity-tag { background: rgba(99,102,241,0.1); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 8px; margin: 4px; }
+        .amenity-tag ion-icon { cursor: pointer; }
+
+        .time-row { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 10px; }
+        .time-row label { flex: 1; display:flex; align-items:center; gap:10px; color:var(--text-dim); font-weight:600;}
+        .time-row input[type="text"] { width: 120px; background: rgba(255,255,255,0.05); border: none; padding: 8px 12px; border-radius: 6px; color: #fff; text-align: center; font-family: 'Inter'; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content" style="padding-bottom:100px;">
+            <form id="spot-form" onsubmit="saveSpot(event)">
+                <div class="page-header">
+                    <div>
+                        <h1 style="font-size:1.8rem;">Spot Registration</h1>
+                        <p style="color:var(--text-dim); font-size:0.9rem; margin-top:4px;">Define physical location profiles with HD media tracking.</p>
+                    </div>
+                    <div style="display:flex; gap:12px;">
+                        <button type="button" class="btn-status" onclick="window.history.back()" style="padding:0 24px; height:46px; border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:12px;">Cancel</button>
+                        <button type="submit" class="btn-primary" id="btn-save" style="padding:0 30px; height:46px; border-radius:12px; font-size:1rem; font-weight:700;"><ion-icon name="save-outline" style="margin-right:8px;"></ion-icon> Verify & Launch Spot</button>
+                    </div>
+                </div>
+
+                <div id="error-alert" style="display:none; background:rgba(239, 68, 68, 0.1); border-left:4px solid #ef4444; padding:15px 20px; margin-bottom:24px; border-radius:8px; color:#fca5a5;"></div>
+
+                <!-- Section: Basic Information -->
+                <section class="form-section fade-in">
+                    <h3><ion-icon name="information-circle"></ion-icon> General Profile</h3>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                        <div class="form-group">
+                            <label class="form-label">Spot Name</label>
+                            <input type="text" class="form-control" name="spot_name" id="spot_name" required placeholder="e.g. Pridens Main Branch">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tagline (Max 50 Chars)</label>
+                            <input type="text" class="form-control" name="spot_tagline" id="spot_tagline" maxlength="50" required placeholder="A catchy phrase for this location">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Spot Description</label>
+                        <textarea class="form-control" name="spot_description" id="spot_description" rows="4" required placeholder="Tell customers what to expect..."></textarea>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:30px;">
+                        <div>
+                            <label class="form-label">Spot Profile Logo</label>
+                            <div class="media-slot" style="background:#111;">
+                                <div class="media-preview-container" style="aspect-ratio:1/1; max-width:200px; margin:0 auto;" onclick="document.getElementById('spot_profile').click()">
+                                    <ion-icon name="camera-outline" style="font-size:32px; color:rgba(255,255,255,0.2);"></ion-icon>
+                                    <span style="font-size:0.75rem; margin-top:8px;">Upload Logo (Optional)</span>
+                                    <img class="media-preview" id="preview_profile">
+                                </div>
+                                <input type="file" id="spot_profile" name="spot_profile" class="upload-input" accept="image/*" onchange="previewFile(this, 'preview_profile')">
+                            </div>
+                            <p style="font-size:0.75rem; color:var(--text-dim); text-align:center; margin-top:8px;">Defaults to merchant logo if skipped</p>
+                        </div>
+                        <div>
+                            <label class="form-label">Cover Photo (Banner)</label>
+                            <div class="media-slot" style="background:#111;">
+                                <div class="media-preview-container" style="aspect-ratio:21/9; width:100%;" onclick="document.getElementById('spot_cover').click()">
+                                    <ion-icon name="image-outline" style="font-size:32px; color:rgba(255,255,255,0.2);"></ion-icon>
+                                    <span style="font-size:0.75rem; margin-top:8px;">Upload Cover (Required)</span>
+                                    <img class="media-preview" id="preview_cover">
+                                </div>
+                                <input type="file" id="spot_cover" name="spot_cover" class="upload-input" accept="image/*" required onchange="previewFile(this, 'preview_cover')">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Interior Media -->
+                <section class="form-section fade-in" style="animation-delay:0.1s;">
+                    <h3><ion-icon name="storefront"></ion-icon> Interior Environment</h3>
+                    <p style="color:#facc15; font-size:0.85rem; margin-bottom:20px; display:flex; align-items:center; gap:6px; background:rgba(250,204,21,0.1); padding:10px 15px; border-radius:8px;"><ion-icon name="warning-outline"></ion-icon> <strong>Strict Policy:</strong> You MUST upload exactly 6 HD pictures and 2 videos for the interior environment to verify this spot.</p>
+                    
+                    <h4 style="color:var(--text-dim); margin-bottom:10px; font-size:0.9rem;">6 Interior Pictures (Required)</h4>
+                    <div class="media-grid" id="interior-pics-container">
+                        <!-- Filled via JS -->
+                    </div>
+
+                    <h4 style="color:var(--text-dim); margin:24px 0 10px; font-size:0.9rem;">2 Interior Videos (Required)</h4>
+                    <div class="media-grid" id="interior-vids-container">
+                        <!-- Filled via JS -->
+                    </div>
+                </section>
+
+                <!-- Section: Exterior Media -->
+                <section class="form-section fade-in" style="animation-delay:0.2s;">
+                    <h3><ion-icon name="business"></ion-icon> Exterior Environment</h3>
+                    <p style="color:#facc15; font-size:0.85rem; margin-bottom:20px; display:flex; align-items:center; gap:6px; background:rgba(250,204,21,0.1); padding:10px 15px; border-radius:8px;"><ion-icon name="warning-outline"></ion-icon> <strong>Strict Policy:</strong> You MUST upload exactly 6 HD pictures and 2 videos for the exterior environment to verify this spot.</p>
+                    
+                    <h4 style="color:var(--text-dim); margin-bottom:10px; font-size:0.9rem;">6 Exterior Pictures (Required)</h4>
+                    <div class="media-grid" id="exterior-pics-container"></div>
+
+                    <h4 style="color:var(--text-dim); margin:24px 0 10px; font-size:0.9rem;">2 Exterior Videos (Required)</h4>
+                    <div class="media-grid" id="exterior-vids-container"></div>
+                </section>
+
+                <!-- Section: Operational Details -->
+                <section class="form-section fade-in" style="animation-delay:0.3s;">
+                    <h3><ion-icon name="list"></ion-icon> Spot Amenities</h3>
+                    
+                    <div style="max-width: 600px;">
+                        <label class="form-label">Amenities</label>
+                        <div style="display:flex; gap:10px; margin-bottom:12px;">
+                            <input type="text" id="amenity-input" class="form-control" placeholder="e.g. Free Wi-Fi, Parking...">
+                            <button type="button" class="btn-primary" onclick="addAmenity()" style="border-radius:10px; padding:0 20px;">Add</button>
+                        </div>
+                        <div id="amenity-tags-container" style="min-height:100px; background:rgba(0,0,0,0.1); border-radius:12px; padding:15px;"></div>
+                    </div>
+                </section>
+
+                
+            </form>
+        </main>
+    </div>
+
+    <script src="js/marketplace-sidebar.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const merchantId = urlParams.get('merchant_id');
+        const spotId = urlParams.get('spot_id');
+
+        let amenitiesList = [];
+        let merchantCity = "";
+        let map, marker;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!merchantId) { window.location.href = 'merchants.html'; return; }
+
+            // Initialise Map
+
+            if (spotId) {
+                document.querySelector('.page-header h1').textContent = "Update Spot Profile";
+                document.getElementById('btn-save').innerHTML = '<ion-icon name="cloud-upload-outline" style="margin-right:8px;"></ion-icon> Update & Sync Spot';
+                await loadSpotData();
+            } else {
+                generateMediaSlots('interior', 6, 2);
+                generateMediaSlots('exterior', 6, 2);
+            }
+        });
+
+        async function loadSpotData() {
+            try {
+                const res = await fetch(`../admin_API/get_spot_detail.php?spot_id=${spotId}`);
+                const json = await res.json();
+                if (json.status === 'success') {
+                    const d = json.data;
+                    document.getElementById('spot_name').value = d.spot_name;
+                    document.getElementById('spot_tagline').value = d.spot_tagline;
+                    document.getElementById('spot_description').value = d.spot_description;
+
+                    // Profile & Cover
+                    if (d.spot_profile) {
+                        const prev = document.getElementById('preview_profile');
+                        prev.src = d.spot_profile.startsWith('http') ? d.spot_profile : `../${d.spot_profile}`;
+                        prev.style.display = 'block';
+                        prev.parentElement.querySelectorAll('ion-icon, span').forEach(el => el.style.display='none');
+                        const hid = document.createElement('input'); hid.type='hidden'; hid.name='existing_profile'; hid.value=d.spot_profile;
+                        document.getElementById('spot-form').appendChild(hid);
+                    }
+                    if (d.spot_cover) {
+                        const prev = document.getElementById('preview_cover');
+                        prev.src = d.spot_cover.startsWith('http') ? d.spot_cover : `../${d.spot_cover}`;
+                        prev.style.display = 'block';
+                        prev.parentElement.querySelectorAll('ion-icon, span').forEach(el => el.style.display='none');
+                        document.getElementById('spot_cover').removeAttribute('required'); // Not required if already exists
+                        const hid = document.createElement('input'); hid.type='hidden'; hid.name='existing_cover'; hid.value=d.spot_cover;
+                        document.getElementById('spot-form').appendChild(hid);
+                    }
+
+                    // Amenities
+                    amenitiesList = JSON.parse(d.amenities || '[]');
+                    renderAmenities();
+
+                    // Media Slots
+                    generateMediaSlots('interior', 6, 2, d.media_groups.interior);
+                    generateMediaSlots('exterior', 6, 2, d.media_groups.exterior);
+
+                }
+            } catch (e) {
+                console.error("Error loading spot detail", e);
+            }
+        }
+
+
+        // ------------------ MEDIA GRID GENERATOR ------------------
+        function generateMediaSlots(section, picCount, vidCount, existingData = null) {
+            const picContainer = document.getElementById(`${section}-pics-container`);
+            let pHTML = '';
+            for(let i=0; i<picCount; i++) {
+                let existing = (existingData && existingData.image) ? existingData.image.find(m => m.slot_index == i) : null;
+                let src = existing ? `../${existing.file_path}` : '';
+                let cap = existing ? existing.caption : '';
+                let req = spotId ? '' : 'required'; // Only required on new spots
+
+                pHTML += `
+                    <div class="media-slot">
+                        <div class="media-preview-container" onclick="document.getElementById('${section}_pic_${i}').click()">
+                            <ion-icon name="camera-outline" style="font-size:24px; color:rgba(255,255,255,0.2); ${existing ? 'display:none;' : ''}"></ion-icon>
+                            <span style="font-size:0.65rem; margin-top:5px; ${existing ? 'display:none;' : ''}">Req Image ${i+1}</span>
+                            <img class="media-preview" id="prev_${section}_pic_${i}" src="${src}" style="${existing ? 'display:block;' : ''}">
+                        </div>
+                        <input type="file" id="${section}_pic_${i}" name="${section}_pic_${i}" class="upload-input" accept="image/*" ${req} onchange="previewFile(this, 'prev_${section}_pic_${i}')">
+                        <input type="text" name="${section}_pic_caption_${i}" class="caption-input" placeholder="Caption..." value="${cap}">
+                        ${existing ? `<input type="hidden" name="existing_${section}_pic_${i}" value="${existing.file_path}">` : ''}
+                    </div>
+                `;
+            }
+            picContainer.innerHTML = pHTML;
+
+            const vidContainer = document.getElementById(`${section}-vids-container`);
+            let vHTML = '';
+            for(let i=0; i<vidCount; i++) {
+                let existing = (existingData && existingData.video) ? existingData.video.find(m => m.slot_index == i) : null;
+                let src = existing ? `../${existing.file_path}` : '';
+                let cap = existing ? existing.caption : '';
+                let req = spotId ? '' : 'required';
+
+                vHTML += `
+                    <div class="media-slot">
+                        <div class="media-preview-container" onclick="document.getElementById('${section}_vid_${i}').click()">
+                            <ion-icon name="videocam-outline" style="font-size:24px; color:rgba(255,255,255,0.2); ${existing ? 'display:none;' : ''}"></ion-icon>
+                            <span style="font-size:0.65rem; margin-top:5px; ${existing ? 'display:none;' : ''}">Req Video ${i+1}</span>
+                            <video class="media-preview" id="prev_${section}_vid_${i}" style="object-fit:cover; ${existing ? 'display:block;' : ''}" muted src="${src}"></video>
+                        </div>
+                        <input type="file" id="${section}_vid_${i}" name="${section}_vid_${i}" class="upload-input" accept="video/*" ${req} onchange="previewVideo(this, 'prev_${section}_vid_${i}')">
+                        <input type="text" name="${section}_vid_caption_${i}" class="caption-input" placeholder="Video Caption..." value="${cap}">
+                        ${existing ? `<input type="hidden" name="existing_${section}_vid_${i}" value="${existing.file_path}">` : ''}
+                    </div>
+                `;
+            }
+            vidContainer.innerHTML = vHTML;
+        }
+
+        function previewFile(input, imgId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById(imgId);
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    img.previousElementSibling.style.display = 'none'; // hide icon
+                    img.previousElementSibling.previousElementSibling.style.display = 'none'; // hide text
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function previewVideo(input, vidId) {
+            if (input.files && input.files[0]) {
+                const vid = document.getElementById(vidId);
+                vid.src = URL.createObjectURL(input.files[0]);
+                vid.style.display = 'block';
+                vid.previousElementSibling.style.display = 'none';
+                vid.previousElementSibling.previousElementSibling.style.display = 'none';
+            }
+        }
+
+        // ------------------ AMENITIES & HOURS ------------------
+        function addAmenity() {
+            const input = document.getElementById('amenity-input');
+            const val = input.value.trim();
+            if(val && !amenitiesList.includes(val)) {
+                amenitiesList.push(val);
+                renderAmenities();
+                input.value = '';
+            }
+        }
+
+        function renderAmenities() {
+            const cont = document.getElementById('amenity-tags-container');
+            if(amenitiesList.length === 0) {
+                cont.innerHTML = '<span style="color:var(--text-dim); font-size:0.85rem;">No amenities added yet.</span>';
+                return;
+            }
+            cont.innerHTML = amenitiesList.map((tm, idx) => `
+                <div class="amenity-tag">
+                    <ion-icon name="checkmark-circle"></ion-icon> ${tm}
+                    <ion-icon name="close" onclick="removeAmenity(${idx})" style="margin-left:4px; opacity:0.7;"></ion-icon>
+                </div>
+            `).join('');
+        }
+
+        function removeAmenity(idx) {
+            amenitiesList.splice(idx, 1);
+            renderAmenities();
+        }
+
+
+
+        // ------------------ FORM SUBMISSION ------------------
+        async function saveSpot(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save');
+            const err = document.getElementById('error-alert');
+            err.style.display = 'none';
+
+            if(amenitiesList.length === 0) {
+                err.innerHTML = "Please add at least 1 amenity.";
+                err.style.display = 'block';
+                document.getElementById('amenity-input').focus();
+                return;
+            }
+
+
+            btn.innerHTML = '<ion-icon name="sync-outline" style="animation:spin 1s linear infinite; margin-right:8px;"></ion-icon> Uploading HD Files...';
+            btn.disabled = true;
+
+            const fd = new FormData(document.getElementById('spot-form'));
+            fd.append('merchant_id', merchantId);
+            if (spotId) fd.append('spot_id', spotId);
+            fd.append('amenities', JSON.stringify(amenitiesList));
+
+            try {
+                const res = await fetch('../admin_API/save_spot.php', { method: 'POST', body: fd });
+                const json = await res.json();
+                
+                if(json.status === 'success') {
+                    alert('Spot successfully verified and launched!');
+                    window.location.href = `merchant_spots.html?id=${merchantId}`;
+                } else {
+                    err.innerHTML = `<ion-icon name="alert-circle-outline"></ion-icon> <strong>Engine Reject:</strong> ${json.message}`;
+                    err.style.display = 'block';
+                    btn.innerHTML = '<ion-icon name="save-outline" style="margin-right:8px;"></ion-icon> Retry Launch';
+                    btn.disabled = false;
+                }
+            } catch(error) {
+                err.innerHTML = "Critical Error: File upload interrupted. Check your network or reduce HD file sizes.";
+                err.style.display = 'block';
+                btn.innerHTML = 'Retry Launch';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -70,10 +70,19 @@
                     </div>
 
                     <div class="editor-card">
-                        <div class="section-header"><ion-icon name="cart-outline"></ion-icon><h2>Promotional Products</h2></div>
+                        <div class="form-group" style="margin-bottom:24px;">
+                            <label>Campaign Category</label>
+                            <select name="item_category" id="p-category" onchange="loadEligibleItems()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 14px; color: #fff; font-family: inherit;">
+                                <option value="Products">Retail Products</option>
+                                <option value="Foods">Food & Beverages</option>
+                                <option value="Services">Professional Services</option>
+                                <option value="Spots">Spots / Venue Rentals</option>
+                            </select>
+                        </div>
+
                         <div id="product-selector" class="product-selector" onclick="openPicker()">
                             <ion-icon name="add-circle-outline" style="font-size:2rem; color:#6366f1;"></ion-icon>
-                            <div style="font-weight:700; margin-top:12px;">Add Products to Promotion</div>
+                            <div style="font-weight:700; margin-top:12px;">Add Items to Campaign</div>
                             <p style="color:var(--text-dim); font-size:0.85rem; margin-top:8px;">Select items and set their discounted prices.</p>
                         </div>
 
@@ -131,31 +140,45 @@
                 return; 
             }
             document.getElementById('p-merchant-id').value = merchantId;
-            document.getElementById('back-link').href = `merchant_marketing.html?id=${merchantId}`;
-            
-            loadEligibleProducts();
+            loadEligibleItems();
         });
 
-        async function loadEligibleProducts() {
+        async function loadEligibleItems() {
             try {
-                const res = await fetch(`../admin_API/get_promo_eligible_products.php?merchant_id=${merchantId}`);
+                const category = document.getElementById('p-category').value;
+                const pickerBtn = document.getElementById('product-selector');
+                pickerBtn.style.opacity = '0.5';
+                pickerBtn.style.pointerEvents = 'none';
+                
+                selectedItems = [];
+                renderSelectedTable();
+
+                const res = await fetch(`../admin_API/get_merchant_eligible_items.php?merchant_id=${merchantId}&type=${category}`);
                 const json = await res.json();
+                
+                pickerBtn.style.opacity = '1';
+                pickerBtn.style.pointerEvents = 'auto';
+
                 if (json.status === 'success') {
                     allProducts = json.data;
                 } else {
-                    console.error("Failed to load products:", json.message);
+                    alert('API Error: ' + json.message);
                 }
             } catch (e) {
-                console.error("Error fetching products:", e);
+                alert('Connection Error: ' + e.message);
             }
         }
 
         function openPicker() {
+            const category = document.getElementById('p-category').value;
             const body = document.getElementById('picker-body');
+            const modalTitle = document.querySelector('#picker-modal h2');
+            modalTitle.innerText = `Select ${category.replace('s','')}`;
+            
             body.innerHTML = '';
             
             if (allProducts.length === 0) {
-                body.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-dim);">No active products found for this merchant.</div>';
+                body.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-dim);">No active ${category.toLowerCase()} found for this merchant.</div>`;
             }
 
             allProducts.forEach(p => {
@@ -180,7 +203,7 @@
             div.innerHTML = `
                 <div style="flex:1;">
                     <div style="font-weight:600;">${product.name} ${model ? `(${model.name})` : ''}</div>
-                    <div style="font-size:0.8rem; color:var(--text-dim);">${model ? model.pridens_sku : product.pridens_sku}</div>
+                    <div style="font-size:0.8rem; color:var(--text-dim);">${model ? model.pridens_sku : (product.pridens_sku || 'Item ID: '+product.id)}</div>
                 </div>
                 <div style="font-weight:700;">₱${model ? model.price : product.price}</div>
                 <button type="button" onclick="toggleItem('${uid}', event)" class="status-badge ${isSelected ? 'status-ongoing' : 'status-expired'}">${isSelected ? 'Added' : 'Add'}</button>

@@ -10,6 +10,7 @@ if (!isset($_SESSION['admin_id'])) {
 }
 
 $merchantId = intval($_GET['merchant_id'] ?? 0);
+$type = $_GET['type'] ?? '';
 
 if (!$merchantId) {
     echo json_encode(['status'=>'error', 'message'=>'Merchant ID missing']);
@@ -17,8 +18,18 @@ if (!$merchantId) {
 }
 
 try {
-    $stmt = $pdo->prepare("SELECT * FROM merchant_custom_categories WHERE merchant_id = ? ORDER BY sort_order ASC, name ASC");
-    $stmt->execute([$merchantId]);
+    $sql = "SELECT * FROM merchant_custom_categories WHERE merchant_id = ?";
+    $params = [$merchantId];
+    
+    if ($type) {
+        $sql .= " AND general_type = ?";
+        $params[] = $type;
+    }
+    
+    $sql .= " ORDER BY sort_order ASC, name ASC";
+    
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode(['status' => 'success', 'data' => $categories]);

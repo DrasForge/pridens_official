@@ -1,6 +1,7 @@
 <?php
 require_once 'db.php';
 $stmt = $pdo->query("SHOW TABLES");
-$tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
-print_r($tables);
+while($row = $stmt->fetch(PDO::FETCH_NUM)) {
+    echo $row[0] . "\n";
+}
 ?>

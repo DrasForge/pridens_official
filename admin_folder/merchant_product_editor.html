@@ -152,6 +152,58 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Menu Modifiers (Grab/FoodPanda Style) -->
+                    <div id="food-modifiers-section" class="seller-card" style="display:none; border:1px solid rgba(250, 204, 21, 0.2);">
+                        <div class="section-header" style="color:#facc15;"><ion-icon name="list-circle-outline"></ion-icon><h2>Menu Modifiers / Add-ons</h2></div>
+                        <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:20px;">Add groups for customizations (e.g. "Select your drink", "Extra Toppings").</p>
+                        
+                        <div id="modifier-groups-container">
+                            <!-- Modifier groups go here -->
+                        </div>
+                        
+                        <button type="button" onclick="addModifierGroup()" class="btn-publish" style="background:#facc15; color:#000; font-weight:700; width:100%; margin-top:15px;">
+                            <ion-icon name="add-outline"></ion-icon> Add New Modifier Group
+                        </button>
+                    </div>
+
+                    <!-- Pridens Product KYC (PH Standard) -->
+                    <div class="seller-card">
+                        <div class="section-header"><ion-icon name="shield-checkmark-outline"></ion-icon><h2>PH Compliance & KYC</h2></div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Registration Type</label>
+                                <select id="kyc-reg-type" name="kyc_reg_type">
+                                    <option value="None">Not Regulated / Others</option>
+                                    <option value="FDA">FDA (Food & Drug Administration)</option>
+                                    <option value="DTI">DTI (Department of Trade & Industry)</option>
+                                    <option value="SEC">SEC (Securities & Exchange Commission)</option>
+                                    <option value="ICC">ICC (Import Commodity Clearance)</option>
+                                    <option value="PS Mark">PS Mark (Philippine Standard)</option>
+                                    <option value="NTC">NTC (National Telecommunications Comm)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Unique License / LTO Number</label>
+                                <input type="text" id="kyc-license-number" name="kyc_license_number" placeholder="Enter registration ID">
+                            </div>
+                            <div class="form-group">
+                                <label>Expiry Date (if applicable)</label>
+                                <input type="date" id="kyc-expiry-date" name="kyc_expiry_date">
+                            </div>
+                            <div class="form-group">
+                                <label>Manufacturing Origin</label>
+                                <select id="kyc-origin" name="kyc_origin">
+                                    <option value="Local-PH">Local (Philipines)</option>
+                                    <option value="Imported">Imported</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top:15px;">
+                            <label>Mandatory Usage & Safety Warnings</label>
+                            <textarea id="kyc-warnings" name="kyc_warnings" placeholder="e.g. Keep out of reach of children. Store in a cool dry place." rows="3"></textarea>
+                        </div>
+                    </div>
 
                     <!-- Availability & Fulfillment -->
                     <div class="seller-card">
@@ -162,34 +214,78 @@
                                     <input type="checkbox" name="is_available" id="p-is-available" value="1" checked style="width:20px; height:20px;">
                                     <span style="font-size:1rem; color:#fff; font-weight:700;">Currently Available</span>
                                 </label>
-                                <p style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Uncheck to mark as "Sold Out" or "Unavailable" without deleting the listing.</p>
                             </div>
                             <div class="form-group">
                                 <label style="display:flex; align-items:center; gap:12px; cursor:pointer;">
-                                    <input type="checkbox" name="is_preorder" id="p-is-preorder" value="1" style="width:20px; height:20px;" onchange="togglePreorderDays(this.checked)">
-                                    <span style="font-size:1rem; color:#fff; font-weight:700;">Pre-order Item</span>
-                                </label>
-                            </div>
-                            <div class="form-group" id="preorder-days-container" style="display:none;">
-                                <label>Lead Time (Days to ship)</label>
-                                <input type="number" name="preorder_days" id="p-preorder-days" value="7" min="1" max="30">
-                            </div>
-                            <div class="form-group" style="border-top:1px solid rgba(255,255,255,0.05); padding-top:16px;">
-                                <label style="display:flex; align-items:center; gap:12px; cursor:pointer;">
-                                    <input type="checkbox" name="is_exclusive" id="p-is-exclusive" value="1" style="width:20px; height:20px;">
+                                    <input type="checkbox" name="is_exclusive" id="p-is-exclusive" value="1" style="width:20px; height:20px;" onchange="toggleExclusiveUI(this.checked)">
                                     <span style="font-size:1rem; color:#818cf8; font-weight:700;">Pridens Exclusive Offer</span>
                                 </label>
-                                <p style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Enable this to allow Pridens Subscribers to purchase this product at the exclusive discounted price set in your shop settings.</p>
                             </div>
+                        </div>
+                        
+                        <!-- Exclusive Offers (Plan Discounts) -->
+                        <div id="exclusive-setup-section" style="display:none; margin-top:20px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.05);">
+                            <label style="font-size:0.75rem; color:var(--text-dim); font-weight:700; margin-bottom:15px; display:block;">SET DEDUCTIONS PER PLAN (%)</label>
+                            <div id="food-deductions-container" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:15px;">
+                                <!-- Dynamic per plan -->
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="preorder-logic" style="margin-top:20px;">
+                             <label style="display:flex; align-items:center; gap:12px; cursor:pointer;">
+                                <input type="checkbox" name="is_preorder" id="p-is-preorder" value="1" onchange="togglePreorderDays(this.checked)">
+                                <span>Pre-order / Batch Cooking</span>
+                            </label>
+                             <div id="preorder-days-container" style="display:none; margin-top:10px;">
+                                 <label style="font-size:0.75rem;">Lead Time (Days)</label>
+                                 <input type="number" name="preorder_days" id="p-preorder-days" value="3">
+                             </div>
                         </div>
                     </div>
 
                     <!-- Logistics & Inclusions -->
                     <div class="seller-card">
-                        <div class="section-header"><ion-icon name="bus-outline"></ion-icon><h2>Logistics & Inclusions</h2></div>
-                        <div class="form-grid">
-                            <div class="form-group"><label>Weight (g)</label><input type="number" name="weight_g" id="p-weight" value="0"></div>
-                            <div class="form-group"><label>Dimensions (cm)</label><div style="display:flex;gap:8px;"><input type="number" name="length_cm" id="p-length" placeholder="L"><input type="number" name="width_cm" id="p-width" placeholder="W"><input type="number" name="height_cm" id="p-height" placeholder="H"></div></div>
+                        <div class="section-header"><ion-icon name="bus-outline"></ion-icon><h2>Logistics & Fulfillment</h2></div>
+                        
+                        <div id="product-logistics-fields">
+                            <div class="form-grid">
+                                <div class="form-group"><label>Weight (g)</label><input type="number" name="weight_g" id="p-weight" value="0"></div>
+                                <div class="form-group"><label>Dimensions (cm)</label>
+                                    <div style="display:flex;gap:8px;">
+                                        <input type="number" name="length_cm" id="p-length" placeholder="L">
+                                        <input type="number" name="width_cm" id="p-width" placeholder="W">
+                                        <input type="number" name="height_cm" id="p-height" placeholder="H">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="food-logistics-fields" style="display:none;">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Estimated Preparation Time (Minutes)</label>
+                                    <input type="number" name="prep_time_mins" id="p-prep-time" value="15" placeholder="e.g. 20">
+                                </div>
+                                <div class="form-group">
+                                    <label>Serving Size / Type</label>
+                                    <input type="text" name="brand" id="f-serving-size" placeholder="e.g. Per Piece, Platter, Good for 2">
+                                </div>
+                                <div class="form-group">
+                                    <label>Spiciness Level</label>
+                                    <select name="spicy_level" id="f-spicy">
+                                        <option value="0">Not Spicy</option>
+                                        <option value="1">Mildly Spicy (🌶️)</option>
+                                        <option value="2">Spicy (🌶️🌶️)</option>
+                                        <option value="3">Extra Hot (🌶️🌶️🌶️)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="margin-top:15px; display:flex; gap:20px; flex-wrap:wrap;">
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" name="is_best_seller" id="f-is-best"> <span>Best Seller ⭐</span></label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" name="is_new" id="f-is-new"> <span>New Dish ✨</span></label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" name="is_vegan" id="f-is-vegan"> <span>Vegan 🌱</span></label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" name="is_halal" id="f-is-halal"> <span>Halal ☪️</span></label>
+                            </div>
                         </div>
                         <div style="margin-top:24px; padding-top:24px; border-top:1px solid rgba(255,255,255,0.05);">
                             <label style="font-size:0.75rem; font-weight:700; color:var(--text-dim); text-transform:uppercase;">Inclusions List</label>
@@ -254,6 +350,7 @@
 
     <!-- Hidden helper for option pics -->
     <input type="file" id="opt-img-input" accept="image/*" style="display:none;" onchange="handleOptionImage(this)">
+    <input type="file" id="mod-img-input" accept="image/*" style="display:none;" onchange="handleModImage(this)">
 
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script src="js/marketplace-sidebar.js"></script>
@@ -262,6 +359,135 @@
         const urlParams = new URLSearchParams(window.location.search);
         const merchantId = urlParams.get('merchant_id') || urlParams.get('id');
         const productId = urlParams.get('p_id');
+        const preCategory = urlParams.get('category');
+
+        document.getElementById('p-category').addEventListener('change', (e) => {
+            toggleCategoryUI(e.target.value);
+        });
+
+        function toggleCategoryUI(cat) {
+            const isFood = cat === 'Foods';
+            document.getElementById('page-title').textContent = isFood ? 'Dish Editor' : 'Listing Editor';
+            document.getElementById('back-link').innerHTML = `<ion-icon name="arrow-back-outline"></ion-icon> ${isFood ? 'Back to Menu' : 'Back to Products'}`;
+            // Also update Product Name label if possible
+            const nameLabel = document.querySelector('label[for="p-name"]') || document.querySelector('.form-group label:first-child');
+            if (nameLabel && nameLabel.textContent.includes('Name')) {
+                nameLabel.textContent = isFood ? 'Dish Name' : 'Product Name';
+            }
+
+            if (isFood) {
+                document.getElementById('product-logistics-fields').style.display = 'none';
+                document.getElementById('food-logistics-fields').style.display = 'block';
+                document.getElementById('food-modifiers-section').style.display = 'block';
+                const varCard = document.getElementById('enable-variations').closest('.seller-card');
+                if (varCard) varCard.style.display = 'none';
+            } else {
+                document.getElementById('product-logistics-fields').style.display = 'block';
+                document.getElementById('food-logistics-fields').style.display = 'none';
+                document.getElementById('food-modifiers-section').style.display = 'none';
+                const varCard = document.getElementById('enable-variations').closest('.seller-card');
+                if (varCard) varCard.style.display = 'block';
+            }
+        }
+
+        async function loadAndRenderPlans() {
+            try {
+                const res = await fetch('../admin_API/get_subscription_plans.php');
+                const json = await res.json();
+                if (json.success) {
+                    const container = document.getElementById('food-deductions-container');
+                    container.innerHTML = json.plans.map(p => `
+                        <div class="form-group" style="background:rgba(255,255,255,0.03); padding:12px; border-radius:10px;">
+                            <label style="font-size:0.7rem; color:#818cf8;">${p.plan_name}</label>
+                            <div style="display:flex; align-items:center; gap:5px;">
+                                <input type="number" step="0.01" class="plan-deduction" data-plan-id="${p.id}" value="0.00" style="background:transparent; border:none; color:#fff; font-size:1rem; width:100%;">
+                                <span style="color:var(--text-dim);">%</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch(e) {}
+        }
+
+        function toggleExclusiveUI(show) {
+            document.getElementById('exclusive-setup-section').style.display = show ? 'block' : 'none';
+            if (show) loadAndRenderPlans();
+        }
+
+        let modifierGroups = [];
+        function addModifierGroup() {
+            modifierGroups.push({ name: '', is_required: false, min_sel: 0, max_sel: 1, options: [] });
+            renderModifierGroups();
+        }
+        function removeModifierGroup(i) { modifierGroups.splice(i, 1); renderModifierGroups(); }
+        function addModifierOption(gIdx) {
+            modifierGroups[gIdx].options.push({ name: '', price: 0 });
+            renderModifierGroups();
+        }
+        function removeModifierOption(gIdx, oIdx) {
+            modifierGroups[gIdx].options.splice(oIdx, 1);
+            renderModifierGroups();
+        }
+
+        let activeModRef = { gIdx: -1, oIdx: -1 };
+        function triggerModImage(gIdx, oIdx) {
+            activeModRef = { gIdx, oIdx };
+            document.getElementById('mod-img-input').click();
+        }
+
+        function handleModImage(input) {
+            if (input.files && input.files[0]) {
+                const { gIdx, oIdx } = activeModRef;
+                modifierGroups[gIdx].options[oIdx].file = input.files[0];
+                renderModifierGroups();
+            }
+        }
+
+        function renderModifierGroups() {
+            const container = document.getElementById('modifier-groups-container');
+            container.innerHTML = modifierGroups.map((g, i) => `
+                <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:20px; margin-bottom:15px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <input type="text" placeholder="Group Name (e.g. Sago/Toppings)" value="${g.name}" 
+                               onchange="modifierGroups[${i}].name = this.value" style="flex:1; font-weight:700; font-size:1rem; border-bottom:1px solid #555;">
+                        <button type="button" onclick="removeModifierGroup(${i})" style="background:none; border:none; color:#f87171; cursor:pointer;"><ion-icon name="trash-outline"></ion-icon></button>
+                    </div>
+                    <div style="display:flex; gap:20px; margin-bottom:15px; font-size:0.8rem;">
+                        <label><input type="checkbox" ${g.is_required ? 'checked' : ''} onchange="modifierGroups[${i}].is_required = this.checked"> Required</label>
+                        <div style="display:flex; align-items:center; gap:8px;">Min: <input type="number" value="${g.min_sel}" onchange="modifierGroups[${i}].min_sel = this.value" style="width:50px;"></div>
+                        <div style="display:flex; align-items:center; gap:8px;">Max: <input type="number" value="${g.max_sel}" onchange="modifierGroups[${i}].max_sel = this.value" style="width:50px;"></div>
+                    </div>
+                    <div id="options-v-${i}" style="margin-left:20px; border-left:2px solid rgba(255,255,255,0.05); padding-left:15px;">
+                        ${g.options.map((opt, oi) => {
+                            let imgStyle = 'color:rgba(255,255,255,0.2);';
+                            let imgIcon = 'image-outline';
+                            let title = 'Click to add modifier image (Uses general image by default)';
+                            if (opt.file || opt.image_path) {
+                                imgStyle = 'color:#818cf8;';
+                                imgIcon = 'image';
+                                title = 'Specific modifier image set';
+                            }
+                            return `
+                                <div style="display:flex; gap:10px; margin-bottom:8px; align-items:center;">
+                                    <button type="button" onclick="triggerModImage(${i}, ${oi})" title="${title}" style="background:none; border:none; ${imgStyle} cursor:pointer; font-size:1.2rem; display:flex;">
+                                        <ion-icon name="${imgIcon}"></ion-icon>
+                                    </button>
+                                    <input type="text" placeholder="Option (e.g. Pearl)" value="${opt.name}" onchange="modifierGroups[${i}].options[${oi}].name = this.value" style="flex:1;">
+                                    <input type="number" step="0.01" placeholder="+₱" value="${opt.price}" onchange="modifierGroups[${i}].options[${oi}].price = this.value" style="width:80px;">
+                                    <button type="button" onclick="removeModifierOption(${i}, ${oi})" style="background:none; border:none; color:var(--text-dim); cursor:pointer;"><ion-icon name="close-outline"></ion-icon></button>
+                                </div>
+                            `;
+                        }).join('')}
+                        <button type="button" onclick="addModifierOption(${i})" style="background:transparent; color:#818cf8; border:1px dashed #818cf8; border-radius:8px; padding:5px 12px; font-size:0.75rem; margin-top:5px; cursor:pointer;">+ Add Option</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        if (!productId && preCategory) {
+            document.getElementById('p-category').value = preCategory;
+            toggleCategoryUI(preCategory);
+        }
 
         let tiers = []; let inclusions = []; let existingGallery = []; let newFiles = []; let removedIds = []; let newVideo = null;
         let activeOptRef = { tIdx: -1, oIdx: -1 };
@@ -271,13 +497,14 @@
             document.getElementById('p-merchant-id').value = merchantId;
             document.getElementById('back-link').href = `merchant_products.html?id=${merchantId}`;
             loadShopCategories();
-            if (productId) loadListingDetails(productId); else renderGallery();
+            if (productId && productId !== 'null' && productId !== 'undefined') loadListingDetails(productId); else renderGallery();
             initVariationToggles();
         });
 
         async function loadShopCategories() {
             try {
-                const res = await fetch(`../admin_API/get_merchant_categories.php?merchant_id=${merchantId}`);
+                const api = preCategory === 'Foods' ? 'get_merchant_food_categories.php' : 'get_merchant_categories.php';
+                const res = await fetch(`../admin_API/${api}?merchant_id=${merchantId}`);
                 const json = await res.json();
                 if (json.status === 'success') json.data.forEach(cat => { document.getElementById('p-custom-category').add(new Option(cat.name, cat.id)); });
             } catch(e) {}
@@ -285,7 +512,8 @@
 
         async function loadListingDetails(id) {
             try {
-                const res = await fetch(`../admin_API/get_merchant_product_detail.php?id=${id}`);
+                const api = preCategory === 'Foods' ? 'get_merchant_dish_detail.php' : 'get_merchant_product_detail.php';
+                const res = await fetch(`../admin_API/${api}?id=${id}`);
                 const json = await res.json();
                 if (json.status === 'success') {
                     const p = json.data;
@@ -350,6 +578,41 @@
                                 }
                             });
                         }, 500);
+                    }
+                    if (p.kyc) {
+                        document.getElementById('kyc-reg-type').value = p.kyc.reg_type || 'None';
+                        document.getElementById('kyc-license-number').value = p.kyc.license_number || '';
+                        document.getElementById('kyc-expiry-date').value = p.kyc.expiry_date || '';
+                        document.getElementById('kyc-origin').value = p.kyc.manufacturing_origin || 'Local-PH';
+                        document.getElementById('kyc-warnings').value = p.kyc.usage_warnings || '';
+                    }
+
+                    document.getElementById('p-prep-time').value = p.prep_time_mins || 0;
+                    document.getElementById('f-serving-size').value = p.brand || '';
+                    document.getElementById('f-spicy').value = p.spicy_level || 0;
+                    document.getElementById('f-is-best').checked = p.is_best_seller == 1;
+                    document.getElementById('f-is-new').checked = p.is_new == 1;
+                    document.getElementById('f-is-vegan').checked = p.is_vegan == 1;
+                    document.getElementById('f-is-halal').checked = p.is_halal == 1;
+
+                    toggleCategoryUI(p.category);
+
+                    if (p.is_exclusive == 1) {
+                        toggleExclusiveUI(true);
+                        // Delay to wait for plan loading
+                        setTimeout(() => {
+                            if (p.exclusive_deductions) {
+                                p.exclusive_deductions.forEach(ex => {
+                                    const inp = document.querySelector(`.plan-deduction[data-plan-id="${ex.plan_id}"]`);
+                                    if (inp) inp.value = ex.deduction_percent;
+                                });
+                            }
+                        }, 800);
+                    }
+
+                    if (p.modifier_groups) { 
+                        modifierGroups = p.modifier_groups; 
+                        renderModifierGroups(); 
                     }
                 }
             } catch(e) {}
@@ -541,9 +804,25 @@
             }
             fd.append('removed_image_ids', JSON.stringify(removedIds));
             newFiles.forEach(f => fd.append('gallery[]', f));
+            fd.append('modifiers_data', JSON.stringify(modifierGroups));
+
+            modifierGroups.forEach((g, gIdx) => {
+                g.options.forEach((o, oIdx) => {
+                    if (o.file) {
+                        fd.append(`mod_image_${gIdx}_${oIdx}`, o.file);
+                    }
+                });
+            });
+
+            const deductions = [];
+            document.querySelectorAll('.plan-deduction').forEach(input => {
+                deductions.push({ plan_id: input.dataset.planId, percent: input.value });
+            });
+            fd.append('exclusive_deductions', JSON.stringify(deductions));
 
             try {
-                const res = await fetch('../admin_API/save_merchant_product.php', { method: 'POST', body: fd });
+                const api = preCategory === 'Foods' ? 'save_merchant_dish.php' : 'save_merchant_product.php';
+                const res = await fetch(`../admin_API/${api}`, { method: 'POST', body: fd });
                 const json = await res.json();
                 if (json.status === 'success') goBack(); else alert(json.message);
             } catch(ex) { console.error(ex); }

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Profile - Pridens Marketplace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.2);
+            --surface: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.06);
+            --text-dim: rgba(255, 255, 255, 0.6);
+        }
+        
+        .profile-layout { display: grid; grid-template-columns: 350px 1fr; gap: 30px; margin-top: 30px; }
+        
+        .sticky-side { position: sticky; top: 30px; }
+        
+        .glass-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 24px; backdrop-filter: blur(20px); margin-bottom: 24px; }
+        
+        .brand-preview { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 16px; overflow: hidden; position: relative; margin-bottom: 20px; border: 1px solid var(--border); }
+        .brand-banner { width: 100%; height: 100%; object-fit: cover; }
+        .brand-logo-container { position: absolute; bottom: 15px; left: 15px; width: 60px; height: 60px; background: #fff; border-radius: 12px; padding: 5px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); overflow: hidden; }
+        .brand-logo { width: 100%; height: 100%; object-fit: contain; }
+        
+        .form-section { margin-bottom: 40px; }
+        .form-section-title { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+        .form-section-title ion-icon { color: var(--accent); font-size: 1.4rem; }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        
+        .input-group { margin-bottom: 20px; }
+        .input-label { display: block; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .input-box { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; color: #fff; font-family: 'Inter', sans-serif; transition: all 0.2s; outline: none; }
+        .input-box:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); }
+        .input-box:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .doc-uploader { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .doc-card { background: rgba(255,255,255,0.02); border: 2px dashed var(--border); border-radius: 16px; padding: 20px; text-align: center; transition: all 0.2s; cursor: pointer; }
+        .doc-card:hover { border-color: var(--accent); background: rgba(99,102,241,0.05); }
+        .doc-card ion-icon { font-size: 2rem; color: var(--text-dim); margin-bottom: 10px; }
+        .doc-card p { font-size: 0.8rem; font-weight: 600; }
+        .doc-card.uploaded { border-style: solid; border-color: #4ade80; background: rgba(74,222,128,0.05); }
+        .doc-card.uploaded ion-icon { color: #4ade80; }
+        
+        .hours-row { display: flex; align-items: center; gap: 15px; background: rgba(0,0,0,0.1); padding: 10px 15px; border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
+        .hours-day { flex: 1; font-weight: 600; font-size: 0.9rem; }
+        .hours-input { width: 130px; background: rgba(255,255,255,0.05); border: none; padding: 8px; border-radius: 6px; color: #fff; text-align: center; font-family: 'Inter'; font-size: 0.8rem; }
+        
+        #map { height: 350px; border-radius: 20px; border: 1px solid var(--border); margin-top: 10px; }
+        
+        .btn-launch { width: 100%; padding: 16px; border-radius: 16px; background: var(--accent); color: #fff; font-weight: 800; border: none; cursor: pointer; font-family: 'Outfit'; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; box-shadow: 0 10px 20px -5px rgba(99,102,241,0.4); }
+        .btn-launch:hover { transform: translateY(-3px); box-shadow: 0 15px 30px -8px rgba(99,102,241,0.5); filter: brightness(1.1); }
+        
+        @keyframes float { 0% { transform: translateY(0); } 50% { transform: translateY(-5px); } 100% { transform: translateY(0); } }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation"><div class="orb orb-1"></div></div>
+    
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>Master Profile</h1>
+                    <p style="color:var(--text-dim); font-size:0.85rem;">Global identity and legal compliance settings</p>
+                </div>
+                <div style="display:flex; gap:12px;">
+                    <button class="btn-status" style="background:rgba(255,255,255,0.05);" onclick="window.history.back()">Discard Changes</button>
+                    <button class="btn-primary" form="profile-form" style="padding:0 30px;">Save Configuration</button>
+                </div>
+            </header>
+
+            <form id="profile-form" onsubmit="saveProfile(event)">
+                <div class="profile-layout">
+                    <!-- Left Column: Media & Highlights -->
+                    <div class="sticky-side">
+                        <div class="glass-card">
+                            <div class="brand-preview">
+                                <img src="../assets/img/default-banner.jpg" id="preview-banner" class="brand-banner">
+                                <div class="brand-logo-container">
+                                    <img src="../assets/img/default-logo.png" id="preview-logo" class="brand-logo">
+                                </div>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label class="input-label">Shop Banner (Cover)</label>
+                                <button type="button" class="btn-status" style="width:100%;" onclick="document.getElementById('banner-file').click()"><ion-icon name="image-outline"></ion-icon> Change Banner</button>
+                                <input type="file" id="banner-file" name="store_banner" style="display:none;" accept="image/*" onchange="previewMedia(this, 'preview-banner')">
+                            </div>
+                            <div class="input-group" style="margin-bottom:0;">
+                                <label class="input-label">Shop Logo</label>
+                                <button type="button" class="btn-status" style="width:100%;" onclick="document.getElementById('logo-file').click()"><ion-icon name="camera-outline"></ion-icon> Change Logo</button>
+                                <input type="file" id="logo-file" name="store_logo" style="display:none;" accept="image/*" onchange="previewMedia(this, 'preview-logo')">
+                            </div>
+                        </div>
+
+                        <div class="glass-card">
+                            <div class="form-section-title" style="font-size:0.9rem; margin-bottom:15px;"><ion-icon name="shield-checkmark" style="font-size:1.1rem;"></ion-icon> Account Status</div>
+                            <div id="status-badge-container" style="margin-bottom:15px;"></div>
+                            
+                            <div style="background:rgba(0,0,0,0.2); border-radius:12px; padding:15px; border:1px solid var(--border);">
+                                <label class="input-label" style="margin-bottom:5px;">Last Synchronized</label>
+                                <div id="last-updated-text" style="font-weight:700; color:#fff; font-size:0.85rem;">-</div>
+                            </div>
+                            
+                            <p style="font-size:0.7rem; color:var(--text-dim); margin-top:15px; line-height:1.4;">
+                                Profile verification is required every 2nd of the month.
+                            </p>
+                            
+                            <button type="button" class="btn-status" id="btn-no-update" style="width:100%; margin-top:15px; background:rgba(74,222,128,0.1); color:#4ade80; border-color:rgba(74,222,128,0.2);" onclick="confirmNoUpdates()">
+                                <ion-icon name="checkmark-done"></ion-icon> No updates needed
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Details -->
+                    <div>
+                        <!-- Business identity -->
+                        <div class="form-section glass-card">
+                            <div class="form-section-title"><ion-icon name="storefront"></ion-icon> Business Identity</div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                                <div class="input-group">
+                                    <label class="input-label">Registered Store Name</label>
+                                    <input type="text" class="input-box" name="store_name" id="store_name" required>
+                                </div>
+                                <div class="input-group">
+                                    <label class="input-label">Store Slug (Custom URL)</label>
+                                    <input type="text" class="input-box" name="store_slug" id="store_slug" required>
+                                </div>
+                            </div>
+                            <div class="input-group" style="margin-bottom:0;">
+                                <label class="input-label">Official Business Description</label>
+                                <textarea class="input-box" name="store_description" id="store_description" rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Contact Center -->
+                        <div class="form-section glass-card">
+                            <div class="form-section-title"><ion-icon name="call"></ion-icon> Communication Hub</div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
+                                <div>
+                                    <label class="input-label">Contact Numbers (Min 1, Max 3)</label>
+                                    <div class="input-group"><input type="text" class="input-box" name="business_contact" id="contact1" required placeholder="Primary Number"></div>
+                                    <div class="input-group"><input type="text" class="input-box" name="business_contact_2" id="contact2" placeholder="Secondary (Optional)"></div>
+                                    <div class="input-group"><input type="text" class="input-box" name="business_contact_3" id="contact3" placeholder="Tertiary (Optional)"></div>
+                                </div>
+                                <div>
+                                    <label class="input-label">Email Addresses (Min 1, Max 3)</label>
+                                    <div class="input-group"><input type="email" class="input-box" name="business_email" id="email1" required placeholder="Primary Email"></div>
+                                    <div class="input-group"><input type="email" class="input-box" name="business_email_2" id="email2" placeholder="Secondary (Optional)"></div>
+                                    <div class="input-group"><input type="email" class="input-box" name="business_email_3" id="email3" placeholder="Tertiary (Optional)"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dynamics -->
+                        <div class="form-section glass-card">
+                            <div class="form-section-title"><ion-icon name="time"></ion-icon> Operational Dynamics</div>
+                            <div id="hours-grid">
+                                <!-- JS Populated -->
+                            </div>
+                        </div>
+
+                        <!-- Location -->
+                        <div class="form-section glass-card">
+                            <div class="form-section-title"><ion-icon name="navigate"></ion-icon> Precision Geolocation</div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                                <div class="input-group">
+                                    <label class="input-label">Target Latitude</label>
+                                    <input type="text" class="input-box" name="latitude" id="lat" readonly required>
+                                </div>
+                                <div class="input-group">
+                                    <label class="input-label">Target Longitude</label>
+                                    <input type="text" class="input-box" name="longitude" id="lng" readonly required>
+                                </div>
+                            </div>
+                            <div id="map"></div>
+                            <p style="font-size:0.75rem; color:var(--text-dim); margin-top:10px;">Drag the pin to your business's precise GPS entrance. This is <b>REQUIRED</b> for customer navigation.</p>
+                        </div>
+
+                        <!-- Compliance -->
+                        <div class="form-section glass-card">
+                            <div class="form-section-title"><ion-icon name="document-lock"></ion-icon> Legal Compliance Documents</div>
+                            <div class="doc-uploader" id="doc-grid">
+                                <!-- JS Populated based on categories -->
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-launch" id="btn-submit">
+                            <ion-icon name="shield-checkmark"></ion-icon> Finalize Master Profile
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script src="js/marketplace-sidebar.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const merchantId = urlParams.get('id') || urlParams.get('merchant_id');
+        let map, marker;
+
+        const CORE_DOCS = [
+            { type: 'DTI Registration', label: 'DTI / SEC', isCore: true },
+            { type: 'BIR 2303', label: 'BIR Certificate', isCore: true },
+            { type: 'Business Permit', label: 'Mayor\'s Permit', isCore: true }
+        ];
+
+        const SUPPORTING_DOCS = [
+            { type: 'Health Permit', label: 'Health Permit' },
+            { type: 'Food Permit', label: 'Food Safety' },
+            { type: 'Fire Safety', label: 'FSIC' },
+            { type: 'Other Supporting', label: 'Supporting Docs' }
+        ];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if(!merchantId) { window.location.href = 'merchants.html'; return; }
+            
+            initMap();
+            generateHours();
+            generateDocSlots();
+            
+            await loadMerchantData();
+        });
+
+        function initMap() {
+            map = L.map('map').setView([7.1907, 125.4553], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            
+            marker = L.marker([7.1907, 125.4553], {draggable: true}).addTo(map);
+            
+            const updateFields = (pos) => {
+                document.getElementById('lat').value = pos.lat.toFixed(7);
+                document.getElementById('lng').value = pos.lng.toFixed(7);
+            };
+
+            marker.on('dragend', () => updateFields(marker.getLatLng()));
+            
+            map.on('click', (e) => {
+                marker.setLatLng(e.latlng);
+                updateFields(e.latlng);
+            });
+        }
+
+        function generateHours() {
+            const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+            document.getElementById('hours-grid').innerHTML = days.map(d => `
+                <div class="hours-row">
+                    <span class="hours-day">${d}</span>
+                    <input type="text" class="hours-input" id="open_${d}" value="08:00 AM">
+                    <span style="color:var(--text-dim);">to</span>
+                    <input type="text" class="hours-input" id="close_${d}" value="05:00 PM">
+                    <label style="display:flex; align-items:center; gap:5px; margin-left:15px; font-size:0.75rem; cursor:pointer;">
+                        <input type="checkbox" id="closed_${d}"> Closed
+                    </label>
+                </div>
+            `).join('');
+        }
+
+        function generateDocSlots() {
+            const grid = document.getElementById('doc-grid');
+            let html = '';
+            
+            // Render Core Docs (Updates only)
+            html += CORE_DOCS.map(doc => `
+                <div class="doc-card" id="card-${doc.type.replace(/\s/g, '-')}" onclick="document.getElementById('file-${doc.type.replace(/\s/g, '-')}').click()">
+                    <ion-icon name="shield-checkmark-outline"></ion-icon>
+                    <p>${doc.label}</p>
+                    <span style="font-size:0.6rem; color:#4ade80;">Registered & Immutable</span>
+                    <input type="file" id="file-${doc.type.replace(/\s/g, '-')}" name="doc_${doc.type.replace(/\s/g, '-')}" style="display:none;" onchange="markUploaded('${doc.type.replace(/\s/g, '-')}', true)">
+                </div>
+            `).join('');
+
+            // Render Supporting Docs
+            html += SUPPORTING_DOCS.map(doc => `
+                <div class="doc-card" id="card-${doc.type.replace(/\s/g, '-')}" onclick="document.getElementById('file-${doc.type.replace(/\s/g, '-')}').click()">
+                    <ion-icon name="cloud-upload-outline"></ion-icon>
+                    <p>${doc.label}</p>
+                    <span style="font-size:0.6rem; color:var(--text-dim);">Optional / Support</span>
+                    <input type="file" id="file-${doc.type.replace(/\s/g, '-')}" name="doc_${doc.type.replace(/\s/g, '-')}" style="display:none;" onchange="markUploaded('${doc.type.replace(/\s/g, '-')}', false)">
+                </div>
+            `).join('');
+
+            grid.innerHTML = html;
+        }
+
+        function markUploaded(type, isCore) {
+            const card = document.getElementById(`card-${type}`);
+            card.classList.add('uploaded');
+            card.querySelector('ion-icon').name = isCore ? 'refresh-circle' : 'checkbox';
+            if(isCore) {
+                card.querySelector('span').innerText = "Update Queued";
+                card.querySelector('span').style.color = "#fbbf24";
+            }
+        }
+
+        async function loadMerchantData() {
+            try {
+                const res = await fetch(`../admin_API/get_merchant_detail.php?id=${merchantId}`);
+                const json = await res.json();
+                if(json.status === 'success') {
+                    const d = json.data;
+                    document.getElementById('store_name').value = d.store_name;
+                    document.getElementById('store_slug').value = d.store_slug;
+                    document.getElementById('store_description').value = d.store_description || '';
+                    document.getElementById('last-updated-text').innerText = d.profile_last_updated ? new Date(d.profile_last_updated).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' }) : 'Never';
+                    
+                    document.getElementById('email1').value = d.business_email;
+                    document.getElementById('email2').value = d.business_email_2 || '';
+                    document.getElementById('email3').value = d.business_email_3 || '';
+                    
+                    document.getElementById('contact1').value = d.business_contact;
+                    document.getElementById('contact2').value = d.business_contact_2 || '';
+                    document.getElementById('contact3').value = d.business_contact_3 || '';
+
+                    if(d.store_logo) document.getElementById('preview-logo').src = `../${d.store_logo}`;
+                    if(d.store_banner) document.getElementById('preview-banner').src = `../${d.store_banner}`;
+
+                    if(d.latitude && d.longitude) {
+                        const pos = [parseFloat(d.latitude), parseFloat(d.longitude)];
+                        map.setView(pos, 16);
+                        marker.setLatLng(pos);
+                        document.getElementById('lat').value = pos[0];
+                        document.getElementById('lng').value = pos[1];
+                    }
+
+                    // Status
+                    const badgeContainer = document.getElementById('status-badge-container');
+                    let color = d.status === 'Active' ? '#4ade80' : (d.status === 'Pending' ? '#fbbf24' : '#f87171');
+                    badgeContainer.innerHTML = `<span style="background:${color}20; color:${color}; padding:6px 15px; border-radius:20px; font-weight:700; font-size:0.8rem; border:1px solid ${color}40;">${d.status.toUpperCase()}</span>`;
+
+                    // Hours
+                    if(d.opening_hours) {
+                        const h = JSON.parse(d.opening_hours);
+                        Object.entries(h).forEach(([day, val]) => {
+                            if(val === "Closed") {
+                                if(document.getElementById(`closed_${day}`)) document.getElementById(`closed_${day}`).checked = true;
+                            } else {
+                                const parts = val.split(' - ');
+                                if(document.getElementById(`open_${day}`)) document.getElementById(`open_${day}`).value = parts[0];
+                                if(document.getElementById(`close_${day}`)) document.getElementById(`close_${day}`).value = parts[1];
+                            }
+                        });
+                    }
+                    
+                    // Docs
+                    if(d.documents) {
+                        d.documents.forEach(doc => {
+                            const cardId = `card-${doc.doc_type.replace(/\s/g, '-')}`;
+                            const card = document.getElementById(cardId);
+                            if(card) {
+                                card.classList.add('uploaded');
+                                card.querySelector('ion-icon').name = 'document';
+                                card.querySelector('p').innerHTML += ' <ion-icon name="checkmark-circle" style="color:#4ade80; font-size:1rem; vertical-align:middle;"></ion-icon>';
+                            }
+                        });
+                    }
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function previewMedia(input, previewId) {
+            if(input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => document.getElementById(previewId).src = e.target.result;
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function saveProfile(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerHTML = '<ion-icon name="sync-outline" style="animation:spin 1s linear infinite;"></ion-icon> Synchronizing Master Records...';
+
+            const fd = new FormData(document.getElementById('profile-form'));
+            fd.append('merchant_id', merchantId);
+
+            // Hours
+            const hours = {};
+            ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].forEach(d => {
+                if(document.getElementById(`closed_${d}`).checked) {
+                    hours[d] = "Closed";
+                } else {
+                    hours[d] = `${document.getElementById(`open_${d}`).value} - ${document.getElementById(`close_${d}`).value}`;
+                }
+            });
+            fd.append('opening_hours', JSON.stringify(hours));
+
+            try {
+                const res = await fetch('../admin_API/save_merchant_profile.php', { method: 'POST', body: fd });
+                const json = await res.json();
+                if(json.status === 'success') {
+                    alert('Profile successfully synchronized!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + json.message);
+                }
+            } catch(e) {
+                alert('Connection interrupted during encryption upload.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<ion-icon name="shield-checkmark"></ion-icon> Finalize Master Profile';
+            }
+        }
+
+        async function confirmNoUpdates() {
+            const warning = `LEGAL ACKNOWLEDGEMENT:\n\nIt is in the service agreement that if a merchant profile provides wrong, incorrect, or misleading information, the account will be immediately FLAGGED and PENALIZED.\n\nDo you solemnly swear that all information currently displayed is accurate and true?`;
+            
+            if(confirm(warning)) {
+                try {
+                    const fd = new FormData();
+                    fd.append('merchant_id', merchantId);
+                    const res = await fetch('../admin_API/confirm_merchant_profile.php', { method: 'POST', body: fd });
+                    const json = await res.json();
+                    if(json.status === 'success') {
+                        alert('Acknowledgement received. Your synchronization status has been updated.');
+                        location.reload();
+                    }
+                } catch(e) { alert('Sync error'); }
+            }
+        }
+    </script>
+</body>
+</html>

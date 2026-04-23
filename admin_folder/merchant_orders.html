@@ -14,8 +14,43 @@
         .tabs-container::-webkit-scrollbar { display: none; }
         .tab-item { padding: 15px 0; color: var(--text-dim); cursor: pointer; font-size: 0.95rem; font-weight: 600; position: relative; transition: all 0.2s; white-space: nowrap; }
         .tab-item:hover { color: #fff; }
-        .tab-item.active { color: #6366f1; }
         .tab-item.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; background: #6366f1; border-radius: 3px; }
+        
+        .shopee-search-container {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 24px;
+            border-radius: 20px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .shopee-search-bar {
+            flex: 1;
+            position: relative;
+        }
+
+        .shopee-search-bar ion-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            font-size: 1.3rem;
+        }
+
+        .shopee-search-bar input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 13px 13px 13px 44px;
+            color: #fff;
+            transition: all 0.3s ease;
+        }
 
         .order-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; margin-bottom: 20px; overflow: hidden; transition: all 0.2s; }
         .order-card:hover { border-color: rgba(99, 102, 241, 0.3); background: rgba(255,255,255,0.04); }
@@ -57,17 +92,29 @@
         <main class="main-content">
             <header class="top-header">
                 <div>
-                    <h1>Order Management</h1>
-                    <p style="color:var(--text-dim); font-size:0.85rem;">Track sales and fulfill customer orders</p>
-                </div>
-                <div class="header-search" style="flex:1; max-width:400px; margin-left:40px;">
-                    <ion-icon name="search-outline"></ion-icon>
-                    <input type="text" id="order-search" placeholder="Search Order SN, Buyer Name..." oninput="filterOrders()">
+                    <h1>Marketplace Orders</h1>
+                    <p style="color:var(--text-dim); font-size:0.85rem;">Manage your retail sales and customer shipments</p>
                 </div>
             </header>
 
-            <div class="dashboard-content">
-                <div class="tabs-container">
+            <div class="dashboard-content" style="padding-bottom: 120px;">
+                <div style="margin-bottom:32px;">
+                    <h1 id="page-title">Order Management</h1>
+                    <p id="page-desc" style="color:var(--text-dim); margin-top:4px;">Manage and fulfill your retail product orders</p>
+                </div>
+
+                <div class="shopee-search-container" id="shopee-search-section">
+                    <div class="shopee-search-bar">
+                        <ion-icon name="search-outline"></ion-icon>
+                        <input type="text" id="main-search-input" placeholder="Search Order ID, Product Name, or Buyer..." onkeyup="handleSearch(event)">
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-primary" onclick="loadOrders()" style="height:46px; padding:0 24px; border-radius:12px;">Search</button>
+                        <button class="btn-status" onclick="resetSearch()" style="height:46px; border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:12px; padding:0 20px;">Reset</button>
+                    </div>
+                </div>
+
+                <div class="tabs-container" id="orders-tabs-bar">
                     <div class="tab-item active" onclick="switchTab('All', this)">All</div>
                     <div class="tab-item" onclick="switchTab('Unpaid', this)">Unpaid</div>
                     <div class="tab-item" onclick="switchTab('Payment Sent', this)">Verifying</div>
@@ -85,6 +132,20 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div id="order-details-modal" class="modal-overlay" style="display:none; z-index:2000;">
+        <div class="modal-content" style="max-width:600px; background:rgba(20,20,32,0.98); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.1); border-radius:24px;">
+            <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.05); padding:20px 24px;">
+                <h2 style="font-size:1.25rem;">Order Details Breakdown</h2>
+                <button class="close-modal" onclick="closeDetailsModal()">&times;</button>
+            </div>
+            <div id="order-details-body" style="padding:24px;"></div>
+            <div class="modal-footer" style="padding:20px 24px; border-top:1px solid rgba(255,255,255,0.05); display:flex; justify-content:flex-end;">
+                <button class="btn-primary" onclick="closeDetailsModal()" style="padding:10px 30px; border-radius:12px;">Close</button>
+            </div>
+        </div>
     </div>
 
     <!-- Proof Viewer Modal -->
@@ -109,174 +170,208 @@
         const urlParams = new URLSearchParams(window.location.search);
         const merchantId = urlParams.get('id') || urlParams.get('merchant_id');
         let currentTab = 'All';
-        let allOrders = [];
-
-        if (!merchantId) {
-            alert('Invalid Merchant ID');
-            window.location.href = 'merchants.html';
-        }
 
         document.addEventListener('DOMContentLoaded', () => {
+            if (!merchantId) { window.location.href = 'merchants.html'; return; }
             loadOrders();
         });
 
+
+        function switchTab(tab, el) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            loadOrders();
+        }
+
         async function loadOrders() {
             const container = document.getElementById('orders-list-container');
-            const url = `../admin_API/get_merchant_orders.php?merchant_id=${merchantId}${currentTab !== 'All' ? `&status=${currentTab}` : ''}`;
+            container.innerHTML = `<div style="text-align:center; padding:100px;"><ion-icon name="hourglass-outline" style="font-size:32px; animation:spin 1s linear infinite; color:#6366f1;"></ion-icon><p style="margin-top:16px; color:var(--text-dim);">Fetching orders...</p></div>`;
             
             try {
+                const search = document.getElementById('main-search-input').value;
+                const url = `../admin_API/get_merchant_orders.php?merchant_id=${merchantId}&category=Products${currentTab !== 'All' ? `&status=${encodeURIComponent(currentTab)}` : ''}&search=${encodeURIComponent(search)}`;
                 const res = await fetch(url);
                 const json = await res.json();
-
-                if (json.status !== 'success') {
-                    container.innerHTML = `<div style="padding:40px; text-align:center; color:#f87171;">${json.message}</div>`;
-                    return;
+                if (json.status === 'success') {
+                    renderOrders(json.data);
+                } else {
+                    container.innerHTML = `<div style="text-align:center; padding:100px;"><p style="color:var(--text-dim);">${json.message}</p></div>`;
                 }
-
-                allOrders = json.data;
-                renderOrders(allOrders);
-
-            } catch (e) {
-                container.innerHTML = `<div style="padding:40px; text-align:center; color:#f87171;">Connection Error</div>`;
+            } catch(e) {
+                container.innerHTML = `<div style="text-align:center; padding:100px;"><p style="color:var(--text-dim);">Network Error</p></div>`;
             }
         }
 
         function renderOrders(orders) {
             const container = document.getElementById('orders-list-container');
             if (orders.length === 0) {
-                container.innerHTML = `
-                    <div style="padding:100px 40px; text-align:center;">
-                        <ion-icon name="receipt-outline" style="font-size:64px; color:rgba(255,255,255,0.1); margin-bottom:20px;"></ion-icon>
-                        <h3 style="color:var(--text-dim);">No Orders Found</h3>
-                        <p style="color:rgba(255,255,255,0.4); margin-top:8px;">No orders found in the "${currentTab}" category.</p>
-                    </div>
-                `;
+                container.innerHTML = `<div style="padding:100px 40px; text-align:center;"><ion-icon name="receipt-outline" style="font-size:64px; color:rgba(255,255,255,0.1); margin-bottom:20px;"></ion-icon><h3 style="color:var(--text-dim);">No Orders Found</h3><p style="color:rgba(255,255,255,0.4); margin-top:8px;">No product orders found.</p></div>`;
                 return;
             }
 
             container.innerHTML = orders.map(order => {
                 const statusClass = order.status.replace(/\s+/g, '').toLowerCase();
-                const totalQty = order.items.reduce((sum, item) => sum + parseInt(item.quantity), 0);
                 
-                return `
-                    <div class="order-card fade-in">
-                        <div class="order-header">
-                            <div class="buyer-info">
-                                <div class="buyer-avatar">${order.first_name[0]}${order.last_name[0]}</div>
-                                <span style="font-weight:700; color:#fff;">${order.first_name} ${order.last_name}</span>
-                                <span style="color:var(--text-dim); margin-left:10px; font-size:0.8rem;">SN: ${order.order_sn}</span>
+                const itemsHtml = order.items.map(item => {
+                    const name = item.name_snapshot || item.name || 'Unknown Item';
+                    let variation = item.variation_snapshot || item.variation || 'Default';
+                    return `
+                        <div class="order-item" style="display:flex; gap:15px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.03);">
+                            <img src="${item.image_path || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`}" style="width:50px; height:50px; border-radius:8px; object-fit:cover;">
+                            <div style="flex:1;">
+                                <div style="color:#fff; font-weight:600;">${name}</div>
+                                <div style="color:var(--text-dim); font-size:0.8rem; margin-top:2px;">${variation}</div>
                             </div>
-                            <div class="status-badge st-${statusClass}">${order.status}</div>
+                            <div style="text-align:right;">
+                                <div style="color:#fff; font-weight:700;">₱${parseFloat(item.price).toLocaleString()}</div>
+                                <div style="color:var(--text-dim); font-size:0.8rem;">x${item.quantity}</div>
+                            </div>
                         </div>
-                        <div class="order-body" style="padding-bottom:10px;">
-                            ${order.items.map(item => `
-                                <div class="order-item">
-                                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(item.name_snapshot)}&background=random&color=fff" class="item-img">
-                                    <div style="flex:1;">
-                                        <div style="color:#fff; font-weight:600;">${item.name_snapshot}</div>
-                                        <div style="color:var(--text-dim); font-size:0.8rem; margin-top:2px;">Variation: ${item.variation_snapshot || 'Default'}</div>
-                                    </div>
-                                    <div style="text-align:right;">
-                                        <div style="font-size:0.75rem; color:var(--text-dim);">Actual: ₱${parseFloat(item.srp_snapshot || item.price).toLocaleString()}</div>
-                                        ${parseFloat(item.item_exclusive_discount) > 0 ? `
-                                            <div style="font-size:0.7rem; color:#818cf8; font-weight:600;">-₱${parseFloat(item.item_exclusive_discount).toLocaleString()} (Exclusive)</div>
-                                        ` : ''}
-                                        <div style="color:#fff; font-weight:700; margin-top:2px;">₱${parseFloat(item.price).toLocaleString()}</div>
-                                        <div style="color:var(--text-dim); font-size:0.8rem;">x${item.quantity}</div>
-                                    </div>
+                    `;
+                }).join('');
+
+                const breakdownHtml = `
+                    <div style="margin-top:15px; padding:15px; background:rgba(255,255,255,0.02); border-radius:12px;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:5px;"><span>SRP Total:</span> <span>₱${parseFloat(order.srp_total || order.total_amount).toLocaleString()}</span></div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#818cf8; margin-bottom:5px;"><span>Exclusive Plan Discount:</span> <span>-₱${parseFloat(order.exclusive_discount_amount || 0).toLocaleString()}</span></div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#a855f7; margin-bottom:5px;"><span>Merchant Vouchers:</span> <span>-₱${parseFloat(order.voucher_discount_amount || 0).toLocaleString()}</span></div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:5px;"><span>System Fee:</span> <span>₱${parseFloat(order.pridens_profit_amount || 0).toLocaleString()}</span></div>
+                        
+                        <div style="border-top:1px dashed rgba(255,255,255,0.1); margin:10px 0;"></div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                            <div style="color:#10b981; font-size:0.85rem; display:flex; align-items:center; gap:4px;"><ion-icon name="sparkles-outline"></ion-icon> Points Received: <span>${parseFloat(order.points_earned || 0).toFixed(2)} Pts</span></div>
+                            <div style="font-weight:700; color:#6366f1; font-size:1.1rem;">Grand Total: ₱${parseFloat(order.total_amount).toLocaleString()}</div>
+                        </div>
+                    </div>
+                `;
+
+                return `
+                    <div class="order-card fade-in" style="background:rgba(21, 21, 33, 0.7); backdrop-filter:blur(10px); border:1px solid rgba(255, 255, 255, 0.05); margin-bottom:20px; border-radius:16px; overflow:hidden;">
+                        <div style="padding:15px 20px; border-bottom:1px solid rgba(255, 255, 255, 0.03); display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div style="background:rgba(59, 130, 246, 0.1); color:#3b82f6; width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+                                    <ion-icon name="basket-outline"></ion-icon>
                                 </div>
-                            `).join('')}
+                                <span style="color:#fff; font-weight:700; font-size:0.9rem;">Order ID: ${order.id}</span>
+                                <span style="color:var(--text-dim); font-size:0.75rem;">| ${new Date(order.created_at).toLocaleString()}</span>
+                            </div>
+                            <div class="status-badge st-${statusClass}" style="background:transparent; border:1px solid currentColor; padding:4px 12px; border-radius:4px; font-size:0.75rem; font-weight:700;">${order.status}</div>
                         </div>
                         
-                        <!-- Financial Breakdown -->
-                        <div style="margin: 0 20px 20px; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.03);">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.85rem;">
-                                <span style="color:var(--text-dim);">SRP Total:</span>
-                                <span style="color:#fff;">₱${parseFloat(order.srp_total || 0).toLocaleString()}</span>
+                        <div style="padding:20px;">
+                            ${itemsHtml}
+                            
+                            <div style="margin-top:20px;">
+                                ${breakdownHtml}
                             </div>
-                            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.85rem; color:#818cf8;">
-                                <span>Exclusive Plan Discount:</span>
-                                <span>-₱${parseFloat(order.exclusive_discount_amount || 0).toLocaleString()}</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.85rem; color:#a855f7;">
-                                <span>Merchant Vouchers:</span>
-                                <span>-₱${parseFloat(order.voucher_discount_amount || 0).toLocaleString()}</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.85rem;">
-                                <span style="color:var(--text-dim);">Shipping Fee:</span>
-                                <span style="color:#fff;">₱${parseFloat(order.shipping_fee || 0).toLocaleString()}</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.85rem; color:#4ade80; border-top:1px dashed rgba(255,255,255,0.1); padding-top:10px; margin-top:10px;">
-                                <span style="display:flex; align-items:center; gap:5px;">
-                                    <ion-icon name="sparkles-outline"></ion-icon> Points Received (0.8%):
-                                </span>
-                                <span style="font-weight:700;">${parseFloat(order.points_earned || 0).toLocaleString()} Pts</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.85rem; color:var(--text-dim);">
-                                <span style="display:flex; align-items:center; gap:5px;">
-                                    <ion-icon name="business-outline"></ion-icon> Pridens System Fee (0.7%):
-                                </span>
-                                <span>₱${parseFloat(order.pridens_profit_amount || 0).toLocaleString()}</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.05); font-weight:700;">
-                                <span style="color:#fff;">Grand Total:</span>
-                                <span style="color:#6366f1; font-size:1.1rem;">₱${parseFloat(order.total_amount).toLocaleString()}</span>
+
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-top:20px;">
+                                <div style="font-size:0.8rem; color:var(--text-dim);">
+                                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;"><ion-icon name="person-outline"></ion-icon> <strong>Customer:</strong> ${order.first_name} ${order.last_name}</div>
+                                    <div style="display:flex; align-items:center; gap:6px;"><ion-icon name="location-outline"></ion-icon> <strong>Shipping:</strong> ${order.shipping_address_snapshot || 'Standard Shipping'}</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="color:var(--text-dim); font-size:0.8rem;">Order Total:</div>
+                                    <div style="font-size:1.4rem; color:var(--primary); font-weight:800; margin-top:4px;">₱${parseFloat(order.total_amount).toLocaleString()}</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="order-footer">
-                            <div style="color:var(--text-dim); font-size:0.85rem;">
-                                ${totalQty} Item(s) | Payment: <span style="color:#fff; font-weight:600;">${order.payment_method}</span>
-                            </div>
-                            <div style="display:flex; align-items:center; gap:24px;">
-                                <div style="text-align:right;">
-                                    <span style="font-size:0.8rem; color:var(--text-dim);">Order Total:</span>
-                                    <span style="font-size:1.2rem; font-weight:800; color:#6366f1; margin-left:8px;">₱${parseFloat(order.total_amount).toLocaleString()}</span>
-                                </div>
-                                ${order.status === 'Unpaid' && order.payment_method === 'COD' ? `
-                                    <button class="btn-status" style="background:rgba(239, 68, 68, 0.1); color:#f87171;" onclick="updateStatus(${order.id}, 'Cancelled')">Disapprove COD</button>
-                                    <button class="btn-status btn-primary" onclick="updateStatus(${order.id}, 'To Ship')">Approve COD Order</button>
-                                ` : ''}
-                                ${order.status === 'Payment Sent' ? `
-                                    <button class="btn-status" style="background:rgba(255,255,255,0.05); color:#fff;" onclick="viewProof('${order.payment_proof_path}', '${order.channel_provider} - ${order.channel_account_name}')">View Proof</button>
-                                    <button class="btn-status btn-primary" onclick="verifyPayment(${order.id}, 'approve')">Approve Payment</button>
-                                    <button class="btn-status" style="background:rgba(239, 68, 68, 0.1); color:#f87171;" onclick="verifyPayment(${order.id}, 'reject')">Disapprove Proof</button>
-                                ` : ''}
-                                ${order.status === 'To Ship' ? `
-                                    <button class="btn-status btn-primary" onclick="updateStatus(${order.id}, 'Shipping')">Arrange Shipment</button>
-                                ` : ''}
-                                ${order.status === 'Shipping' ? `
-                                    <button class="btn-status btn-primary" onclick="updateStatus(${order.id}, 'Completed')">Mark as Received</button>
-                                ` : ''}
-                            </div>
+
+                        <div style="background:rgba(255,255,255,0.01); padding:15px 20px; display:flex; justify-content:flex-end; gap:12px; border-top:1px solid rgba(255,255,255,0.03);">
+                            <button class="btn-status" style="background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.2); height:38px; border-radius:8px; padding:0 16px; font-size:0.85rem;" onclick="viewBreakdown(${JSON.stringify(order).replace(/'/g, "&apos;")})">View Details</button>
+                            ${order.payment_proof_path ? `<button class="btn-status" style="background:rgba(16,185,129,0.1); color:#10b981; border:1px solid #10b981; height:38px; border-radius:8px; padding:0 16px;" onclick="viewProof('${order.payment_proof_path}', '${order.channel_provider} - ${order.channel_account_name}')">Check Proof</button>` : ''}
+                            ${renderActionButtons(order)}
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        async function verifyPayment(orderId, action) {
-            if (!confirm(`Are you sure you want to ${action} this payment?`)) return;
+        function renderActionButtons(order) {
+            if (order.status === 'Unpaid' && order.payment_channel_id) return `<button class="btn-status btn-primary" onclick="updateOrderStatus(${order.id}, 'To Ship')">Approve Payment</button>`;
+            if (order.status === 'To Ship') return `<button class="btn-status btn-primary" onclick="updateOrderStatus(${order.id}, 'Shipping')">Ship Order</button>`;
+            if (order.status === 'Shipping') return `<button class="btn-status btn-primary" onclick="updateOrderStatus(${order.id}, 'Completed')">Complete Order</button>`;
+            return '';
+        }
+
+        function handleSearch(e) { if(e.key === 'Enter') loadOrders(); }
+        function resetSearch() { document.getElementById('main-search-input').value = ''; loadOrders(); }
+
+        async function updateOrderStatus(orderId, newStatus) {
+            if (!confirm(`Are you sure you want to mark this order as ${newStatus}?`)) return;
             try {
-                const res = await fetch(`../admin_API/verify_merchant_order_payment.php`, {
+                const res = await fetch(`../admin_API/update_merchant_order_status.php`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ order_id: orderId, action: action })
+                    body: JSON.stringify({ order_id: orderId, status: newStatus })
                 });
                 const json = await res.json();
-                if (json.status === 'success') {
-                    alert(json.message);
-                    loadOrders();
-                } else {
-                    alert(json.message);
-                }
-            } catch (e) {
-                alert('Connection Error');
-            }
+                if (json.status === 'success') { loadOrders(); } else { alert(json.message); }
+            } catch(e) { alert('Connection Error'); }
+        }
+
+        function viewBreakdown(order) {
+            const container = document.getElementById('order-details-body');
+            
+            const itemsHtml = order.items.map(item => `
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:0.9rem;">
+                    <span style="color:var(--text-dim);">${item.name_snapshot || item.name} x${item.quantity}</span>
+                    <span style="color:#fff; font-weight:600;">₱${parseFloat(item.price * item.quantity).toLocaleString()}</span>
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div style="margin-bottom:24px;">
+                    <h4 style="color:#6366f1; font-size:0.75rem; text-transform:uppercase; margin-bottom:12px; letter-spacing:1px;">Delivery Information</h4>
+                    <div style="background:rgba(255,255,255,0.03); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
+                        <div style="margin-bottom:8px;"><span style="color:var(--text-dim);">Customer:</span> <span style="color:#fff;">${order.first_name} ${order.last_name}</span></div>
+                        <div style="margin-bottom:8px;"><span style="color:var(--text-dim);">Phone:</span> <span style="color:#fff;">${order.phone_number || 'N/A'}</span></div>
+                        <div><span style="color:var(--text-dim);">Address:</span> <span style="color:#fff; font-size:0.85rem;">${order.shipping_address_snapshot || 'N/A'}</span></div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 style="color:#6366f1; font-size:0.75rem; text-transform:uppercase; margin-bottom:12px; letter-spacing:1px;">Payment Summary</h4>
+                    <div style="background:rgba(255,255,255,0.03); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
+                        ${itemsHtml}
+                        <div style="border-top:1px solid rgba(255,255,255,0.05); margin:12px 0;"></div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.85rem;">
+                            <span style="color:var(--text-dim);">SRP Subtotal:</span>
+                            <span style="color:#fff;">₱${parseFloat(order.srp_total || order.total_amount).toLocaleString()}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.85rem;">
+                            <span style="color:#818cf8;">Exclusive Plan Discount:</span>
+                            <span style="color:#818cf8;">-₱${parseFloat(order.exclusive_discount_amount || 0).toLocaleString()}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.85rem;">
+                            <span style="color:#a855f7;">Merchant Voucher:</span>
+                            <span style="color:#a855f7;">-₱${parseFloat(order.voucher_discount_amount || 0).toLocaleString()}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.85rem;">
+                            <span style="color:var(--text-dim);">System/Logistics Fee:</span>
+                            <span style="color:#fff;">₱${parseFloat(order.pridens_profit_amount || 0).toLocaleString()}</span>
+                        </div>
+                        <div style="border-top:2px solid rgba(99,102,241,0.2); margin:12px 0; padding-top:12px; display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight:700; color:#fff;">Total Amount Due:</span>
+                            <span style="font-size:1.4rem; font-weight:800; color:#6366f1;">₱${parseFloat(order.total_amount).toLocaleString()}</span>
+                        </div>
+                        <div style="text-align:right; color:#10b981; font-size:0.75rem;">
+                            <ion-icon name="sparkles-outline"></ion-icon> Points Earned: ${parseFloat(order.points_earned || 0).toFixed(2)} Pts
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('order-details-modal').style.display = 'flex';
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('order-details-modal').style.display = 'none';
         }
 
         function viewProof(path, channelInfo) {
             const img = document.getElementById('proof-image');
-            img.src = `../admin_API/${path}`;
+            img.src = `../${path}`;
             document.getElementById('proof-channel-info').textContent = channelInfo;
             document.getElementById('proof-modal').style.display = 'flex';
         }
@@ -285,9 +380,8 @@
             document.getElementById('proof-modal').style.display = 'none';
         }
 
-        async function updateStatus(orderId, nextStatus) {
+        async function updateOrderStatus(orderId, nextStatus) {
             if (!confirm(`Move order to ${nextStatus}?`)) return;
-
             try {
                 const res = await fetch(`../admin_API/update_merchant_order_status.php`, {
                     method: 'POST',
@@ -305,22 +399,8 @@
             }
         }
 
-        function switchTab(tab, element) {
-            currentTab = tab;
-            document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-            element.classList.add('active');
-            loadOrders();
-        }
-
-        function filterOrders() {
-            const q = document.getElementById('order-search').value.toLowerCase();
-            const filtered = allOrders.filter(o => 
-                o.order_sn.toLowerCase().includes(q) || 
-                o.first_name.toLowerCase().includes(q) || 
-                o.last_name.toLowerCase().includes(q)
-            );
-            renderOrders(filtered);
-        }
+        function handleSearch(e) { if(e.key === 'Enter') loadOrders(); }
+        function resetSearch() { document.getElementById('main-search-input').value = ''; loadOrders(); }
     </script>
 </body>
 </html>
