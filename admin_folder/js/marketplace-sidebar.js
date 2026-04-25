@@ -95,6 +95,12 @@
                 <span>P-Voucher Redemptions</span>
             </a>
 
+            <div style="padding: 20px 24px 10px; font-size: 0.65rem; color: #f43f5e; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">Store Sales</div>
+            <a href="merchant_pos.html?id=${mId}" class="nav-item" data-page="merchant_pos.html">
+                <ion-icon name="calculator-outline"></ion-icon>
+                <span>Merchant POS Terminal</span>
+            </a>
+
             <div style="padding: 20px 24px 10px; font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">Settings</div>
             
             <a href="merchant_profile_editor.html?id=${mId}" class="nav-item" data-page="merchant_profile_editor.html">

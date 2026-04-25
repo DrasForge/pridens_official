@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant POS - Specialized Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        :root {
+            --pos-bg: #0f172a;
+            --pos-card: rgba(30, 41, 59, 0.7);
+            --pos-accent: #6366f1;
+            --pos-success: #22c55e;
+            --pos-danger: #ef4444;
+            --pos-border: rgba(255, 255, 255, 0.08);
+        }
+
+        .pos-container {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 20px;
+            height: calc(100vh - 120px);
+            margin-top: 20px;
+        }
+
+        /* Inventory Side */
+        .pos-inventory {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow: hidden;
+        }
+
+        .category-tabs {
+            display: flex;
+            gap: 12px;
+            background: var(--pos-card);
+            padding: 8px;
+            border-radius: 14px;
+            border: 1px solid var(--pos-border);
+        }
+
+        .cat-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-dim);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .cat-btn.active {
+            background: var(--pos-accent);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .item-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+            overflow-y: auto;
+            padding-bottom: 20px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--pos-accent) transparent;
+        }
+
+        .pos-item-card {
+            background: var(--pos-card);
+            border: 1px solid var(--pos-border);
+            border-radius: 16px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .pos-item-card:hover {
+            border-color: var(--pos-accent);
+            transform: translateY(-4px);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .item-img {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            object-fit: cover;
+            background: rgba(255,255,255,0.03);
+        }
+
+        .item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .item-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-price {
+            font-weight: 700;
+            color: var(--pos-accent);
+            font-size: 1.1rem;
+        }
+
+        /* Cart Side */
+        .pos-cart {
+            background: var(--pos-card);
+            border: 1px solid var(--pos-border);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        .cart-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--pos-border);
+            background: rgba(255,255,255,0.02);
+        }
+
+        .subscriber-lookup {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .lookup-input {
+            flex: 1;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--pos-border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #fff;
+            font-family: inherit;
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-qty {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .qty-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: 1px solid var(--pos-border);
+            background: transparent;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .cart-footer {
+            padding: 24px;
+            background: rgba(0,0,0,0.3);
+            border-top: 1px solid var(--pos-border);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+            margin-bottom: 24px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .btn-checkout {
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            background: var(--pos-success);
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-checkout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(34, 197, 94, 0.3);
+        }
+
+        .type-tag {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-right: 6px;
+        }
+        .tag-product { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+        .tag-food { background: rgba(234, 179, 8, 0.2); color: #fbbf24; }
+        .tag-service { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="background-animation">
+        <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+    </div>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <button class="menu-btn" id="open-sidebar"><ion-icon name="menu-outline"></ion-icon></button>
+                <div style="flex:1; margin-left: 20px;">
+                    <h1 style="font-size: 1.25rem; font-weight: 700;">Merchant POS Terminal</h1>
+                </div>
+                <div class="header-profile">
+                    <div id="pos-clock" style="margin-right: 20px; font-weight: 600; color: var(--pos-accent);">12:00 PM</div>
+                    <div class="avatar"><img src="https://ui-avatars.com/api/?name=POS&background=6366f1&color=fff" alt="POS"></div>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <div class="pos-container">
+                    <!-- Left: Inventory -->
+                    <div class="pos-inventory">
+                        <div class="category-tabs">
+                            <button class="cat-btn active" onclick="switchCategory('products', this)">
+                                <ion-icon name="cube-outline"></ion-icon> Products
+                            </button>
+                            <button class="cat-btn" onclick="switchCategory('food', this)">
+                                <ion-icon name="fast-food-outline"></ion-icon> Food & Menu
+                            </button>
+                            <button class="cat-btn" onclick="switchCategory('services', this)">
+                                <ion-icon name="briefcase-outline"></ion-icon> Services
+                            </button>
+                        </div>
+
+                        <div style="position:relative;">
+                            <ion-icon name="search-outline" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--text-dim);"></ion-icon>
+                            <input type="text" id="item-search" placeholder="Search items by name or SKU..." 
+                                style="width:100%; padding:14px 14px 14px 48px; border-radius:12px; background:var(--pos-card); border:1px solid var(--pos-border); color:#fff;">
+                        </div>
+
+                        <div class="item-grid" id="item-grid">
+                            <!-- Items loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Right: Cart -->
+                    <div class="pos-cart">
+                        <div class="cart-header">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <h3 style="font-weight: 700;">Current Order</h3>
+                                <button onclick="clearCart()" style="background:none; border:none; color:var(--pos-danger); cursor:pointer; font-size:0.8rem; font-weight:600;">Clear All</button>
+                            </div>
+                            <div class="subscriber-lookup">
+                                <input type="text" id="sub-id" class="lookup-input" placeholder="Subscriber ID (Optional)">
+                                <button class="btn-primary" onclick="lookupSubscriber()" style="padding:8px 12px; border-radius:8px;"><ion-icon name="search"></ion-icon></button>
+                            </div>
+                            <div id="sub-info" style="margin-top:8px; font-size:0.75rem; color:var(--pos-success); display:none;">
+                                <ion-icon name="checkmark-circle"></ion-icon> Linked: <span id="sub-name">John Doe</span>
+                            </div>
+                        </div>
+
+                        <div class="cart-items" id="cart-items">
+                            <div style="text-align:center; padding-top:40px; color:var(--text-dim);">
+                                <ion-icon name="cart-outline" style="font-size:48px; opacity:0.2;"></ion-icon>
+                                <p style="margin-top:10px;">Cart is empty</p>
+                            </div>
+                        </div>
+
+                        <div class="cart-footer">
+                            <div style="margin-bottom: 20px; display: flex; gap: 8px;">
+                                <input type="text" id="voucher-code" class="lookup-input" placeholder="Voucher/Promo Code">
+                                <button class="btn-primary" onclick="applyVoucher()" style="padding:8px 16px; border-radius:8px;">Apply</button>
+                            </div>
+
+                            <div class="summary-row">
+                                <span>Gross Total</span>
+                                <span id="gross-val">₱0.00</span>
+                            </div>
+                            <div class="summary-row" style="color: var(--pos-accent);">
+                                <span>Exclusivity Discount</span>
+                                <span id="exclusivity-val">- ₱0.00</span>
+                            </div>
+                            <div class="summary-row" style="color: var(--pos-success);">
+                                <span>Voucher Discount</span>
+                                <span id="voucher-val">- ₱0.00</span>
+                            </div>
+                            <div class="total-row">
+                                <span>Total</span>
+                                <span id="total-val">₱0.00</span>
+                            </div>
+                            <div style="background:rgba(99, 102, 241, 0.1); border:1px dashed var(--pos-accent); padding:10px; border-radius:12px; margin-bottom:20px; text-align:center;">
+                                <div style="font-size:0.75rem; color:var(--text-dim);">Estimated Points</div>
+                                <div id="points-val" style="font-weight:700; color:#fff;">0.00 Points</div>
+                            </div>
+                            <button class="btn-checkout" onclick="handleCheckout()">
+                                <ion-icon name="cash-outline"></ion-icon> Complete Sale
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="checkout-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(8px);">
+        <div style="background:#1e293b; width:400px; border-radius:24px; padding:32px; border:1px solid var(--pos-border);">
+            <h2 style="text-align:center; margin-bottom:24px;">Checkout</h2>
+            
+            <div style="background:rgba(255,255,255,0.03); padding:20px; border-radius:16px; text-align:center; margin-bottom:24px;">
+                <div style="font-size:0.9rem; color:var(--text-dim); margin-bottom:8px;">Total Payable</div>
+                <div id="modal-total" style="font-size:2.5rem; font-weight:800; color:var(--pos-success);">₱0.00</div>
+            </div>
+
+            <label style="display:block; margin-bottom:8px; font-size:0.8rem; color:var(--text-dim);">Payment Method</label>
+            <select id="payment-method" style="width:100%; padding:14px; border-radius:12px; background:rgba(0,0,0,0.2); border:1px solid var(--pos-border); color:#fff; margin-bottom:24px; font-family:inherit;">
+                <option value="Cash">Cash / Walk-in</option>
+                <option value="GCash">GCash</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Points">Points Balance</option>
+                <option value="P-Voucher">P-Voucher</option>
+            </select>
+
+            <div style="display:flex; gap:12px;">
+                <button onclick="closeCheckout()" style="flex:1; padding:14px; border-radius:12px; border:1px solid var(--pos-border); background:transparent; color:#fff; cursor:pointer;">Cancel</button>
+                <button onclick="submitSale()" style="flex:1; padding:14px; border-radius:12px; border:none; background:var(--pos-accent); color:#fff; font-weight:700; cursor:pointer;">Process Sale</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/marketplace-sidebar.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const merchantId = urlParams.get('id');
+        let inventory = { products: [], food: [], services: [] };
+        let cart = [];
+        let currentCategory = 'products';
+        let subscriber = null;
+        let activeVoucher = null;
+        let merchantOffers = {}; // plan_id -> discount_percent
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!merchantId) { alert('Merchant ID missing'); return; }
+            loadItems();
+            loadMerchantOffers();
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            document.getElementById('item-search').addEventListener('input', (e) => {
+                renderGrid(e.target.value);
+            });
+        });
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('pos-clock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function loadItems() {
+            try {
+                const res = await fetch(`../admin_API/get_merchant_pos_items.php?merchant_id=${merchantId}`);
+                const json = await res.json();
+                if (json.status === 'success') {
+                    inventory = json.data;
+                    renderGrid();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadMerchantOffers() {
+            try {
+                const res = await fetch(`../admin_API/get_merchant_plans_offers.php?merchant_id=${merchantId}`);
+                const json = await res.json();
+                if (json.status === 'success') {
+                    json.data.forEach(o => {
+                        merchantOffers[o.id] = parseFloat(o.discount_percent);
+                    });
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function switchCategory(cat, btn) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderGrid();
+        }
+
+        function renderGrid(search = '') {
+            const grid = document.getElementById('item-grid');
+            const items = inventory[currentCategory];
+            const filtered = items.filter(i => 
+                i.name.toLowerCase().includes(search.toLowerCase()) || 
+                (i.pridens_sku && i.pridens_sku.toLowerCase().includes(search.toLowerCase()))
+            );
+
+            grid.innerHTML = filtered.map(item => `
+                <div class="pos-item-card" onclick="addToCart('${currentCategory}', ${item.id})">
+                    <div style="position:relative;">
+                        <img src="${item.display_image ? '../admin_API/'+item.display_image : 'https://ui-avatars.com/api/?name='+encodeURIComponent(item.name)+'&background=random&color=fff'}" class="item-img">
+                        ${item.is_exclusive ? '<div style="position:absolute; top:8px; right:8px; background:var(--pos-accent); color:#fff; font-size:0.6rem; font-weight:800; padding:4px 8px; border-radius:6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">EXCLUSIVE</div>' : ''}
+                    </div>
+                    <div class="item-info">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-price">₱${parseFloat(item.price).toLocaleString()}</div>
+                        <div style="font-size:0.7rem; color:var(--text-dim);">${item.item_type === 'Product' ? 'Stock: '+item.stock_quantity : 'Unlimited'}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(category, id) {
+            const item = inventory[category].find(i => i.id === id);
+            if (!item) return;
+
+            const existing = cart.find(c => c.id === id && c.item_type === item.item_type);
+            if (existing) {
+                existing.qty++;
+            } else {
+                cart.push({ ...item, qty: 1 });
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            if (cart.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding-top:40px; color:var(--text-dim);"><ion-icon name="cart-outline" style="font-size:48px; opacity:0.2;"></ion-icon><p style="margin-top:10px;">Cart is empty</p></div>';
+                updateTotals();
+                return;
+            }
+
+            const subscriberPlanId = subscriber ? subscriber.plan?.id : null;
+            const exclusiveRate = (subscriberPlanId && merchantOffers[subscriberPlanId]) ? (merchantOffers[subscriberPlanId] / 100) : 0;
+
+            let html = '';
+            cart.forEach((item, index) => {
+                const itemGross = item.price * item.qty;
+                
+                let itemExDiscount = 0;
+                if (item.is_exclusive && exclusiveRate > 0) {
+                    itemExDiscount = itemGross * exclusiveRate;
+                }
+                item.exclusive_discount_amount = itemExDiscount;
+
+                let itemVDiscount = 0;
+                if (activeVoucher) {
+                    const catMap = { 'Products': 'Product', 'Foods': 'Food', 'Services': 'Service' };
+                    const vCat = catMap[activeVoucher.item_category] || activeVoucher.item_category;
+                    
+                    if (activeVoucher.target_type === 'All' || vCat === item.item_type) {
+                        if (activeVoucher.reward_type === 'Percentage') {
+                            itemVDiscount = (itemGross - itemExDiscount) * (activeVoucher.reward_value / 100);
+                        }
+                    }
+                }
+                item.voucher_discount_amount = itemVDiscount;
+
+                const itemNet = itemGross - itemExDiscount - itemVDiscount;
+
+                html += `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <div style="font-size:0.85rem; font-weight:600; color:#fff;">
+                            <span class="type-tag tag-${item.item_type.toLowerCase()}">${item.item_type}</span> ${item.name}
+                        </div>
+                        <div style="color:var(--text-dim); font-size:0.75rem; margin-top:2px;">₱${parseFloat(item.price).toFixed(2)} x ${item.qty}</div>
+                        ${itemExDiscount > 0 ? `<div style="font-size:0.7rem; color:var(--pos-accent); margin-top:2px;">- ₱${itemExDiscount.toFixed(2)} (Exclusive)</div>` : ''}
+                        ${itemVDiscount > 0 ? `<div style="font-size:0.7rem; color:var(--pos-success); margin-top:2px;">- ₱${itemVDiscount.toFixed(2)} (Voucher)</div>` : ''}
+                        <div style="color:var(--pos-accent); font-weight:700; font-size:0.9rem; margin-top:4px;">₱${itemNet.toFixed(2)}</div>
+                    </div>
+                    <div class="cart-item-qty">
+                        <button class="qty-btn" onclick="changeQty(${index}, -1)">-</button>
+                        <span style="font-weight:700; min-width:20px; text-align:center;">${item.qty}</span>
+                        <button class="qty-btn" onclick="changeQty(${index}, 1)">+</button>
+                    </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+            updateTotals();
+        }
+
+        function changeQty(index, delta) {
+            cart[index].qty += delta;
+            if (cart[index].qty <= 0) {
+                cart.splice(index, 1);
+            }
+            renderCart();
+        }
+
+        function clearCart() {
+            if (confirm('Clear entire cart?')) {
+                cart = [];
+                activeVoucher = null;
+                document.getElementById('voucher-code').value = '';
+                renderCart();
+            }
+        }
+
+        async function applyVoucher() {
+            const code = document.getElementById('voucher-code').value.trim();
+            if (!code) return;
+
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            
+            try {
+                const res = await fetch('../admin_API/validate_pos_voucher.php', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        merchant_id: merchantId,
+                        voucher_code: code,
+                        cart_amount: subtotal
+                    })
+                });
+                const json = await res.json();
+                if (json.status === 'success') {
+                    activeVoucher = json.voucher;
+                    alert(`Voucher Applied: ${activeVoucher.name}`);
+                    renderCart();
+                } else {
+                    alert(json.message);
+                    activeVoucher = null;
+                    renderCart();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function updateTotals() {
+            let gross = 0;
+            let totalExDiscount = 0;
+            let totalVDiscount = 0;
+
+            cart.forEach(i => {
+                gross += (i.price * i.qty);
+                totalExDiscount += (i.exclusive_discount_amount || 0);
+                totalVDiscount += (i.voucher_discount_amount || 0);
+            });
+
+            if (activeVoucher && activeVoucher.reward_type === 'Fixed') {
+                totalVDiscount = Math.min(activeVoucher.reward_value, gross - totalExDiscount);
+                const netAfterEx = gross - totalExDiscount;
+                if (netAfterEx > 0) {
+                    cart.forEach(i => {
+                        const itemNetAfterEx = (i.price * i.qty) - (i.exclusive_discount_amount || 0);
+                        i.voucher_discount_amount = (itemNetAfterEx / netAfterEx) * totalVDiscount;
+                    });
+                }
+            }
+
+            const customerPays = gross - totalExDiscount - totalVDiscount;
+            const pointsFee = customerPays * 0.015;
+            const subPoints = customerPays * 0.008;
+            const pridensPoints = customerPays * 0.007;
+            const merchantNet = customerPays - pointsFee;
+
+            document.getElementById('gross-val').textContent = `₱${gross.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            document.getElementById('exclusivity-val').textContent = `- ₱${totalExDiscount.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            document.getElementById('voucher-val').textContent = `- ₱${totalVDiscount.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            document.getElementById('total-val').textContent = `₱${customerPays.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            
+            document.getElementById('points-val').innerHTML = `
+                <div style="font-size:0.9rem; margin-bottom:4px; font-weight:700;">Merchant Payable (1.5%): - ₱${pointsFee.toFixed(2)}</div>
+                <div style="font-size:0.75rem; color:#aaa; margin-bottom:6px;">Subscriber (0.8%): ₱${subPoints.toFixed(2)} | Pridens (0.7%): ₱${pridensPoints.toFixed(2)}</div>
+                <div style="font-size:0.85rem; color:var(--pos-success); font-weight:700; border-top:1px dashed var(--pos-border); padding-top:6px;">Merchant Net: ₱${merchantNet.toFixed(2)}</div>
+            `;
+        }
+
+        async function lookupSubscriber() {
+            const id = document.getElementById('sub-id').value.trim();
+            if (!id) return;
+            
+            try {
+                const res = await fetch(`../admin_API/get_subscriber.php?id=${id}`);
+                const json = await res.json();
+                if (json.status === 'success') {
+                    subscriber = json.data;
+                    document.getElementById('sub-info').style.display = 'block';
+                    document.getElementById('sub-name').textContent = `${subscriber.first_name} ${subscriber.last_name} (${subscriber.plan?.plan_name || 'Standard'})`;
+                    renderCart();
+                } else {
+                    alert('Subscriber not found');
+                    subscriber = null;
+                    document.getElementById('sub-info').style.display = 'none';
+                    renderCart();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function handleCheckout() {
+            if (cart.length === 0) { alert('Cart is empty'); return; }
+            document.getElementById('modal-total').textContent = document.getElementById('total-val').textContent;
+            document.getElementById('checkout-modal').style.display = 'flex';
+        }
+
+        function closeCheckout() {
+            document.getElementById('checkout-modal').style.display = 'none';
+        }
+
+        async function submitSale() {
+            const subId = document.getElementById('sub-id').value.trim();
+            const method = document.getElementById('payment-method').value;
+
+            let total = 0;
+            cart.forEach(i => {
+                total += (i.price * i.qty) - (i.exclusive_discount_amount || 0) - (i.voucher_discount_amount || 0);
+            });
+
+            try {
+                const res = await fetch('../admin_API/process_merchant_pos_sale.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        merchant_id: merchantId,
+                        subscriber_id: subId || 'WALK-IN',
+                        cart: cart,
+                        payment_method: method,
+                        total_amount: total
+                    })
+                });
+                const json = await res.json();
+                if (json.status === 'success') {
+                    alert('Transaction Successful!');
+                    cart = [];
+                    activeVoucher = null;
+                    document.getElementById('voucher-code').value = '';
+                    renderCart();
+                    closeCheckout();
+                    loadItems(); // Refresh stock
+                } else {
+                    alert('Error: ' + json.message);
+                }
+            } catch (e) {
+                alert('Network Error');
+            }
+        }
+    </script>
+</body>
+</html>
